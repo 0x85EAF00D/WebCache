@@ -1,0 +1,3 @@
+Open Chrome and go to chrome://extensions/
+Enable "Developer mode" in the top right corner.
+Click "Load unpacked" and select your extension directory.
