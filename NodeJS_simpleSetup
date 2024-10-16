@@ -3,7 +3,7 @@ install node.js
 
 make a folder to store the project
 initialize project in the folder: 
-npm init -y
+npm -init -y
 
 install express.js with
 npm intall express
