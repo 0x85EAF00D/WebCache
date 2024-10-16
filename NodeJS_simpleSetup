@@ -1,0 +1,37 @@
+how to set up test website
+install node.js
+
+make a folder to store the project
+initialize project in the folder: 
+npm init -y
+
+install express.js with
+npm intall express
+
+on mac use “sudo touch server.js”
+on windows create a text file and change the name to “server.js”
+
+in the file add
+
+const express = require('express');
+const app = express();
+const port = 3000;
+
+app.get('/', (req, res) => {
+  res.send('Hello World!');
+});
+
+app.listen(port, () => {
+  console.log(`Server listening on port ${port}`);
+});
+
+
+save the text doc 
+
+
+then run 
+“node server.js”
+
+
+go to web browser and type 
+“127.0.0.1:3000”
