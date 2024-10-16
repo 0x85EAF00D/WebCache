@@ -6,7 +6,7 @@ initialize project in the folder:
 npm -init -y
 
 install express.js with
-npm intall express
+npm install express
 
 on mac use “sudo touch server.js”
 on windows create a text file and change the name to “server.js”
