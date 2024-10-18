@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
+import styles from './SavePage.module.css'; // Import the CSS module
 
 const SavePage = () => {
   const [link, setLink] = useState('');
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -13,7 +13,7 @@ const SavePage = () => {
     }
   
     try {
-      const response = await fetch('http://localhost:3000/api/save-link', {  // Make sure this URL points to your back-end
+      const response = await fetch('http://localhost:3000/api/save-link', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -35,13 +35,12 @@ const SavePage = () => {
       alert('Failed to submit the link.');
     }
   };
-  
 
   return (
-    <div>
+    <div className={styles.form}>
       <h1>Save a Link</h1>
       <form onSubmit={handleSubmit}>
-        <label>
+        <label className={styles.label}>
           Paste a link:
           <input 
             type="url" 
@@ -49,9 +48,10 @@ const SavePage = () => {
             onChange={(e) => setLink(e.target.value)} 
             placeholder="https://example.com" 
             required
+            className={styles.input}
           />
         </label>
-        <button type="submit">Save Link</button>
+        <button type="submit" className={styles.button}>Save Link</button>
       </form>
     </div>
   );

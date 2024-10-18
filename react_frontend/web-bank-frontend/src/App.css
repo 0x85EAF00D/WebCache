@@ -1,20 +1,48 @@
 /* App.css */
-.App {
-  text-align: center;
+/* Apply theme to both html and body for full coverage */
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
 }
 
-/* Add dark and light theme */
+/* Make the root div take full height */
+#root {
+  min-height: 100vh;
+}
+
+.App {
+  text-align: center;
+  min-height: 100vh;
+}
+
+/* Theme styles */
 .light-theme {
   background-color: white;
-  color: black;
+  color: #242528;
+  min-height: 100vh;
 }
 
 .dark-theme {
-  background-color: #121212;
+  background-color: #242528;
+  color: white;
+  min-height: 100vh;
+}
+
+/* Adjust nav styles for both themes */
+nav {
+  padding: 1rem;
+}
+
+.dark-theme nav a {
   color: white;
 }
 
-/* Existing styles */
+.light-theme nav a {
+  color: black;
+}
+
+/* Rest of your existing styles */
 .App-logo {
   height: 40vmin;
   pointer-events: none;
@@ -27,14 +55,20 @@
 }
 
 .App-header {
-  background-color: #282c34;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   font-size: calc(10px + 2vmin);
-  color: white;
+}
+
+.dark-theme .App-header {
+  background-color: #242528;
+}
+
+.light-theme .App-header {
+  background-color: #f0f0f0;
 }
 
 .App-link {
@@ -48,4 +82,55 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+/* Add these new styles to your App.css */
+nav {
+  padding: 1rem;
+  position: relative;  /* This allows absolute positioning of children */
+}
+
+nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+}
+
+nav ul li {
+  margin-right: 2rem;
+}
+
+/* Style for all nav links */
+nav a {
+  text-decoration: none;
+  font-weight: 500;
+}
+
+/* Theme button specific styling */
+/* Updated theme button styling */
+.theme-toggle {
+  position: fixed;  /* This pins it to the viewport */
+  right: 1rem;     /* Distance from right edge */
+  top: 1rem;       /* Distance from top edge */
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  font-size: 1.2rem;
+  z-index: 1000;   /* This ensures it stays on top of other content */
+}
+
+.theme-toggle:hover {
+  opacity: 0.8;
+}
+
+/* Keep your existing theme styles */
+.light-theme nav a {
+  color: black;
+}
+
+.dark-theme nav a {
+  color: white;
 }
