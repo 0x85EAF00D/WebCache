@@ -1,0 +1,6 @@
+call httrack:
+Httrack
+Example 
+httrack https://www.ebay.com/p/15021695352?iid=175399935682 -r0 -O /Users/admin/websites 
+-O specifies the output folder
+-r0 specifies how many website recursive depths should be explored
