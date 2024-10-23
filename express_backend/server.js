@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const { exec } = require('child_process'); // Import child_process module
 
 const app = express();
 const port = 3000;
@@ -35,4 +36,22 @@ app.post('/api/save-link', (req, res) => {
 // Start the server
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
+
+  // Automatically open localhost:3000 in the default browser
+  const platform = process.platform;
+  let command;
+
+  if (platform === 'win32') {
+    command = 'start http://localhost:3000';
+  } else if (platform === 'darwin') {
+    command = 'open http://localhost:3000';
+  } else if (platform === 'linux') {
+    command = 'xdg-open http://localhost:3000';
+  }
+
+  exec(command, (err) => {
+    if (err) {
+      console.error('Failed to open browser:', err);
+    }
+  });
 });
