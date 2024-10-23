@@ -1,0 +1,10 @@
+#1 
+Some downloaded html files don't open correctly in chrome, but will open correct in safari and Firefox
+#2
+Connect frontend to backend
+#3
+Connect sql to backend
+#4
+Contact httrack in backend from a string from front end
+#5
+Create an end point for the front end to talk to the back end using "node js express"

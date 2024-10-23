@@ -1,0 +1,5 @@
+This url if downloaded won't work in chrome, but will work if opened in safari or Firefox
+https://barotraumagame.com/wiki/Minerals
+
+For example this url will download and work on all platforms
+https://www.ebay.com/itm/175399935682
