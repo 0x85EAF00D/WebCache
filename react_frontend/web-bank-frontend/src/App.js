@@ -1,8 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
-import Home from './components/Home';
-import About from './components/About';
-import Contact from './components/Contact';
+import { BrowserRouter as Router, Route, Routes, Link, Navigate } from 'react-router-dom';
 import SavePage from './components/Save_Page';
 import './App.css'; // Import the updated CSS file
 import LoadPage from './components/Load_Page';
@@ -44,9 +41,6 @@ function App() {
         {/* Everything inside here is part of your App component */}
         <nav>
           <ul>
-            <li><Link to="/">Home</Link></li>
-            <li><Link to="/about">About</Link></li>
-            <li><Link to="/contact">Contact</Link></li>
             <li><Link to="/save-link">Save Link</Link></li>
             <li><Link to="/load-websites">Load Websites</Link></li>
 
@@ -61,9 +55,7 @@ function App() {
         </nav>
 
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
+          <Route path="/" element={<Navigate to="/save-link" />} />
           <Route path="/save-link" element={<SavePage />} />
           <Route path="/load-websites" element={<LoadPage />} />
         </Routes>

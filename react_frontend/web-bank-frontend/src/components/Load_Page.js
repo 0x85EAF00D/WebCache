@@ -7,18 +7,31 @@ import {
   Link,
   CircularProgress,
   Alert,
-  Stack
+  Stack,
+  TextField,
+  InputAdornment
 } from '@mui/material';
+import { Search } from 'lucide-react';
 import styles from './LoadPage.module.css';
 
 const LoadPage = () => {
   const [websites, setWebsites] = useState([]);
+  const [filteredWebsites, setFilteredWebsites] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchWebsites();
   }, []);
+
+  useEffect(() => {
+    // Filter websites whenever search query changes
+    const filtered = websites.filter(website => 
+      website.link.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    setFilteredWebsites(filtered);
+  }, [searchQuery, websites]);
 
   const fetchWebsites = async () => {
     try {
@@ -27,6 +40,7 @@ const LoadPage = () => {
       
       if (response.ok) {
         setWebsites(data);
+        setFilteredWebsites(data); // Initialize filtered results with all websites
       } else {
         setError('Failed to load websites');
       }
@@ -36,6 +50,10 @@ const LoadPage = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSearchChange = (event) => {
+    setSearchQuery(event.target.value);
   };
 
   if (isLoading) {
@@ -63,13 +81,29 @@ const LoadPage = () => {
         Saved Websites
       </Typography>
       
-      <Stack spacing={2}>
-        {websites.length === 0 ? (
+      <TextField
+        fullWidth
+        variant="outlined"
+        placeholder="Search websites..."
+        value={searchQuery}
+        onChange={handleSearchChange}
+        className={styles.searchField}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <Search size={20} />
+            </InputAdornment>
+          ),
+        }}
+      />
+      
+      <Stack spacing={2} className={styles.websiteList}>
+        {filteredWebsites.length === 0 ? (
           <Typography color="text.secondary" align="center">
-            No websites saved yet
+            {websites.length === 0 ? 'No websites saved yet' : 'No matching websites found'}
           </Typography>
         ) : (
-          websites.map((website, index) => (
+          filteredWebsites.map((website, index) => (
             <Card key={index} className={styles.card}>
               <CardContent>
                 <Link
