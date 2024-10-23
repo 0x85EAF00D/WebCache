@@ -29,8 +29,23 @@ app.post('/api/save-link', (req, res) => {
 
   console.log(`Link received: ${link}`);
 
-  // Respond with a success message
-  res.status(200).json({ message: 'Link saved successfully!' });
+    //httrack $(link) -r0 -O /OutputLocation
+    // httrack is a url html file downloader
+    // -r2 means recusive depth of 0 or just the current page plus one link away for the most infomation on the current page
+    // -%eN0 means to set the external links depth to 0
+    // -O is the output directory
+    console.log(`Running Command: "httrack ${link} -r2 -O WebsiteTempDatabase -%eN0"`);
+    const command = `httrack ${link} -r2  -O WebsiteTempDatabase -%eN0`;
+  exec(command, (err, stdout, stderr) => {
+    if (err) {
+      console.error('Error executing command:', err);
+      return res.status(500).json({ message: 'Failed to execute command' });
+    }
+    console.log(`Command output:`);
+    console.log(`${stdout}`);
+      // Respond with a success message
+      res.status(200).json({ message: 'Link saved and command executed successfully!' });
+  });
 });
 
 // Start the server
