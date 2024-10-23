@@ -10,6 +10,13 @@ app.use(cors());
 // Middleware for parsing JSON
 app.use(express.json());
 
+app.use(express.static(path.join(__dirname, '')))
+
+// gets other routes (React router)
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '', 'index.html'));
+});
+
 // Example POST endpoint
 app.post('/api/save-link', (req, res) => {
   const { link } = req.body;
