@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
 const port = 3000;
@@ -10,11 +11,12 @@ app.use(cors());
 // Middleware for parsing JSON
 app.use(express.json());
 
-app.use(express.static(path.join(__dirname, '')))
+// Serve static files from the 'build' folder
+app.use(express.static(path.join(__dirname, 'build')));
 
-// gets other routes (React router)
+// Serve the index.html for all routes (for React Router or other SPA)
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '', 'index.html'));
+    res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
 // Example POST endpoint
