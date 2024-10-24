@@ -4,17 +4,16 @@ const path = require('path');
 const { exec } = require('child_process'); // Import child_process module
 const fs = require('fs'); // "File System" used to search index.html for exact html file
 
-
-
-
 function extractUrl(filename) {
     const content = fs.readFileSync(filename, 'utf-8');
     const match = content.match(/URL=([^\s">]+)/);
     return match ? match[1] : null;
 }
+
 function extractAfterLastSlash(url) {
     return url.split('/').pop();
 }
+
 function moveFile(sourcePath, destinationPath) {
     // Ensure the destination directory exists
     const destinationDir = path.dirname(destinationPath); // Get the directory from the destination path
@@ -30,6 +29,33 @@ function moveFile(sourcePath, destinationPath) {
             console.log(`File moved successfully to ${destinationPath}`);
         }
     });
+}
+
+// Deletes everything but the desired HTML doc
+function cleanUpDatabase(excludeFolder) {
+  const databasePath = path.join(__dirname, 'WebsiteTempDatabase');
+  
+  // If directory DNE, output message
+  fs.readdir(databasePath, (err, files) => {
+      if (err) {
+          console.error(`Error reading directory: ${err}`);
+          return;
+      }
+      
+      // Iterates through and deletes all the not excluded folders
+      files.forEach(file => {
+          const filePath = path.join(databasePath, file);
+          if (file !== excludeFolder) {
+              fs.rm(filePath, { recursive: true, force: true }, (err) => {
+                  if (err) {
+                      console.error(`Error deleting ${filePath}: ${err}`);
+                  } else {
+                      console.log(`${filePath} deleted successfully`);
+                  }
+              });
+          }
+      });
+  });
 }
 
 
@@ -73,10 +99,6 @@ app.post('/api/save-link', (req, res) => {
     }
     console.log(`Command output:`);
     console.log(`${stdout}`);
-      // Respond with a success message
-      res.status(200).json({ message: 'Link saved and command executed successfully!' });
-      
-      
       
       // way to move the wanted html file
       const url = extractUrl('WebsiteTempDatabase/index.html');
@@ -86,12 +108,16 @@ app.post('/api/save-link', (req, res) => {
       
       const destinationFilePath = path.join(__dirname, 'WebsiteTempDatabase', 'DownloadedHTML', DownloadedHTMLfile); // Destination file
 
-      
-      moveFile('WebsiteTempDatabase/' + url, destinationFilePath);
+     
+
+      moveFile('WebsiteTempDatabase/' + url, destinationFilePath); // Move the wanted file
+
+      cleanUpDatabase('DownloadedHTML'); // Clean up everything but the DownloadedHTML folder
+
+      res.status(200).json({ message: 'Link saved, command executed, and cleanup completed!' }); // Success message
+
   });
 });
-
-
 
 
 
