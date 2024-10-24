@@ -2,6 +2,36 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const { exec } = require('child_process'); // Import child_process module
+const fs = require('fs'); // "File System" used to search index.html for exact html file
+
+
+
+
+function extractUrl(filename) {
+    const content = fs.readFileSync(filename, 'utf-8');
+    const match = content.match(/URL=([^\s">]+)/);
+    return match ? match[1] : null;
+}
+function extractAfterLastSlash(url) {
+    return url.split('/').pop();
+}
+function moveFile(sourcePath, destinationPath) {
+    // Ensure the destination directory exists
+    const destinationDir = path.dirname(destinationPath); // Get the directory from the destination path
+    if (!fs.existsSync(destinationDir)) {
+        fs.mkdirSync(destinationDir, { recursive: true });
+    }
+
+    // Move the file
+    fs.rename(sourcePath, destinationPath, (err) => {
+        if (err) {
+            console.error(`Error moving file: ${err}`);
+        } else {
+            console.log(`File moved successfully to ${destinationPath}`);
+        }
+    });
+}
+
 
 const app = express();
 const port = 3000;
@@ -45,8 +75,25 @@ app.post('/api/save-link', (req, res) => {
     console.log(`${stdout}`);
       // Respond with a success message
       res.status(200).json({ message: 'Link saved and command executed successfully!' });
+      
+      
+      
+      // way to move the wanted html file
+      const url = extractUrl('WebsiteTempDatabase/index.html');
+      console.log(`Extracted URL: ${url}`);
+      const DownloadedHTMLfile = extractAfterLastSlash(url);
+            console.log('HTML Wanted File: ${DownloadedHTMLfile}');
+      
+      const destinationFilePath = path.join(__dirname, 'WebsiteTempDatabase', 'DownloadedHTML', DownloadedHTMLfile); // Destination file
+
+      
+      moveFile('WebsiteTempDatabase/' + url, destinationFilePath);
   });
 });
+
+
+
+
 
 // Start the server
 app.listen(port, () => {
