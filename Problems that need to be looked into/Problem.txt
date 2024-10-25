@@ -1,10 +1,12 @@
 #1 
 Some downloaded html files don't open correctly in chrome, but will open correct in safari and Firefox
-#2
-Connect frontend to backend
+#2 
+Program exits if it fails to download link
 #3
 Connect sql to backend
 #4
-Contact httrack in backend from a string from front end
+The same url can be entered multiple times instead of once
 #5
-Create an end point for the front end to talk to the back end using "node js express"
+A name need to be sent to Chris fo this data base
+#6
+Data base needs to be made. downloaded html files need to be categorized correctly in the data base
