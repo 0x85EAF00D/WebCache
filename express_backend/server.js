@@ -58,6 +58,25 @@ function cleanUpDatabase(excludeFolder) {
   });
 }
 
+function readHtmlTitle(filePath) {
+    // Read the HTML file
+    fs.readFile(filePath, 'utf-8', (err, data) => {
+        if (err) {
+            console.error(`Error reading file: ${err}`);
+            return;
+        }
+
+        // Use a regular expression to extract the <title> tag content
+        const titleMatch = data.match(/<title>(.*?)<\/title>/i);
+        
+        if (titleMatch && titleMatch[1]) {
+            console.log(`Page Title: ${titleMatch[1]}`);
+        } else {
+            console.log('No title found in the HTML file.');
+        }
+    });
+}
+
 
 const app = express();
 const port = 3000;
@@ -104,7 +123,7 @@ app.post('/api/save-link', (req, res) => {
       const url = extractUrl('WebsiteTempDatabase/index.html');
       console.log(`Extracted URL: ${url}`);
       const DownloadedHTMLfile = extractAfterLastSlash(url);
-            console.log('HTML Wanted File: ${DownloadedHTMLfile}');
+            console.log(`HTML Wanted File: ${DownloadedHTMLfile}`);
       
       const destinationFilePath = path.join(__dirname, 'WebsiteTempDatabase', 'DownloadedHTML', DownloadedHTMLfile); // Destination file
 
@@ -115,7 +134,7 @@ app.post('/api/save-link', (req, res) => {
       cleanUpDatabase('DownloadedHTML'); // Clean up everything but the DownloadedHTML folder
 
       res.status(200).json({ message: 'Link saved, command executed, and cleanup completed!' }); // Success message
-
+      readHtmlTitle(destinationFilePath);
   });
 });
 
