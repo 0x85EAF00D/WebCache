@@ -104,7 +104,7 @@ app.post('/api/save-link', (req, res) => {
       const url = extractUrl('WebsiteTempDatabase/index.html');
       console.log(`Extracted URL: ${url}`);
       const DownloadedHTMLfile = extractAfterLastSlash(url);
-            console.log('HTML Wanted File: ${DownloadedHTMLfile}');
+            console.log(`HTML Wanted File: ${DownloadedHTMLfile}`);
       
       const destinationFilePath = path.join(__dirname, 'WebsiteTempDatabase', 'DownloadedHTML', DownloadedHTMLfile); // Destination file
 
