@@ -24,7 +24,8 @@ const SavePage = () => {
       const result = await response.json();
       
       if (response.ok) {
-        alert('Link saved successfully!');
+        //alert('Link saved successfully!');
+        alert(`${result.message}`);
       } else {
         alert(`Error: ${result.message}`);
       }
