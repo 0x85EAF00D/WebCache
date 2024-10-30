@@ -5,12 +5,21 @@ const { exec } = require('child_process'); // Import child_process module
 const fs = require('fs'); // "File System" used to search index.html for exact html file
 
 function extractUrl(filename) {
-    const content = fs.readFileSync(filename, 'utf-8');
-    const match = content.match(/URL=([^\s">]+)/);
-    return match ? match[1] : null;
+    try {
+        const content = fs.readFileSync(filename, 'utf-8');
+        const match = content.match(/URL=([^\s">]+)/);
+        return match ? match[1] : null;
+    } catch (error) {
+        console.error("Error reading file:", error.message);
+        return null; // Return null or handle it as per your requirements
+    }
 }
 
 function extractAfterLastSlash(url) {
+    if (typeof url !== 'string') {
+        console.error("Error: Invalid URL. Expected a string but got:", url);
+        return null; // or an appropriate default value
+    }
     return url.split('/').pop();
 }
 
@@ -119,22 +128,32 @@ app.post('/api/save-link', (req, res) => {
     console.log(`Command output:`);
     console.log(`${stdout}`);
       
+       
+       
       // way to move the wanted html file
       const url = extractUrl('WebsiteTempDatabase/index.html');
       console.log(`Extracted URL: ${url}`);
       const DownloadedHTMLfile = extractAfterLastSlash(url);
-            console.log(`HTML Wanted File: ${DownloadedHTMLfile}`);
-      
-      const destinationFilePath = path.join(__dirname, 'WebsiteTempDatabase', 'DownloadedHTML', DownloadedHTMLfile); // Destination file
+      console.log(`HTML Wanted File: ${DownloadedHTMLfile}`);
 
-     
+       // check that helps the backend stop from failing after error input
+      if (url == null) {
+          return res.status(200).json({ message: 'Link failed' }); // Link extraction failed
+      } else {
+          const destinationFilePath = path.join(__dirname, 'WebsiteTempDatabase', 'DownloadedHTML', DownloadedHTMLfile); // Destination path for the file
 
-      moveFile('WebsiteTempDatabase/' + url, destinationFilePath); // Move the wanted file
+          try {
+              moveFile(path.join('WebsiteTempDatabase', url), destinationFilePath); // Move the wanted file
+              cleanUpDatabase('DownloadedHTML'); // Clean up everything except DownloadedHTML folder
+              readHtmlTitle(destinationFilePath); // Read the HTML title
+              return res.status(200).json({ message: 'Link saved, command executed, and cleanup completed!' }); // Success response
 
-      cleanUpDatabase('DownloadedHTML'); // Clean up everything but the DownloadedHTML folder
+          } catch (error) {
+              console.error("Error processing file operations:", error.message);
+              return res.status(500).json({ message: 'An error occurred during file processing' }); // Error response
+          }
+      }
 
-      res.status(200).json({ message: 'Link saved, command executed, and cleanup completed!' }); // Success message
-      readHtmlTitle(destinationFilePath);
   });
 });
 
