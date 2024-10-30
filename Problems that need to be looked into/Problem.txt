@@ -6,7 +6,15 @@ Program exits if it fails to download link
 Connect sql to backend
 #4
 The same url can be entered multiple times instead of once
+    - Maybe we can create a lock that prevents downloading while the current file is downloading. Or disable the "Save Link" button until download completes
 #5
 A name need to be sent to Chris fo this data base
 #6
 Data base needs to be made. downloaded html files need to be categorized correctly in the data base
+#7
+Program will need to create a local MySQL database for the user during the initial setup/installation
+    SQLite may be a better solution if we don't need MySQL features
+        - MySQL works better if the database needs to hosted on a remote server (allows multiple users to access the same database at once)
+        - SQLite works better if the database will be stored locally (only that user will have access to the database)
+#8
+Some visual cue after pressing download to indicate that the download is happening. So the user doesn't think the site is broken or anything
