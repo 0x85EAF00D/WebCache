@@ -1,0 +1,47 @@
+Server.js to Database.js
+
+These are notes about server.js functions that will need to talk to database.js
+These notes are to understand how the different functions work so connecting them can be as smooth as possible
+
+
+function moveFile(sourcePath[url we are saving, don't touch], destinationPath[where it is going, adjust THIS])
+                                
+function moveFile('WebsiteTempDatabase/' + url, destinationFilePath)
+    - Use this to store the file in its proper directory
+        - DestinationFilePath will need to start with:
+            '../database/Websites'
+                (Will need to go up a directory)
+    - Call the database.js function from here to insert data into the table
+    - DO NOT CHANGE'WebsiteTempDatabase/'
+        - this is the temp place HTTrack moves it. The function will move it out of ther into destinationPath
+    - Will need to run:
+        let title = readHtmlTitle(destinationFilePath);
+            - AFTER changing readHtmlFile() to return a string 
+
+    Parameters needed to insert into database:
+        webURL = url
+        title = will get from let title = readHtmlTitle(destinationFilePath);
+        filePath = destinationFilePath
+    Insert into this function:
+        insertWebsite(url, title, destinationFilePath);
+
+
+function readHtmlTitle(filePath)
+    - Outputs title to the console
+    - If no title, outputs to the console 'No title found in the HTML file.'
+    - Change this so that instead of being a void function, it returns the titleMatch[1] as a string
+        - If no title found, return either 'No Title' or return the url/some sort of default value
+    - line 148, instead of running readHtmlTitle(destinationFilePath);
+        - put console.log(readHtmlTitle(destinationFilePath));
+
+Functions to export to server.js
+    insertWebsite()
+    deleteWebsite()
+    queryAll()
+    sortWebsites()
+
+    Like this: 
+    module.exports = { insertWebsite(), deleteWebsite(), queryAll(), sortWebsites() };
+
+Include this in server.js:
+const database = require('./database/database.js');
