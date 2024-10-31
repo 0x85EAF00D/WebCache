@@ -4,17 +4,18 @@ Some downloaded html files don't open correctly in chrome, but will open correct
 Program exits if it fails to download link
 #3
 Connect sql to backend
+    - Connected and saves the html file
+    - Does not save the files deleted by cleanUpDatabase function
 #4
 The same url can be entered multiple times instead of once
-    - Maybe we can create a lock that prevents downloading while the current file is downloading. Or disable the "Save Link" button until download completes
 #5
 A name need to be sent to Chris fo this data base
+    - Name can be extracted from html file and appears in console.log, but for some reason returns undefined when saving the title in a variable
 #6
 Data base needs to be made. downloaded html files need to be categorized correctly in the data base
+    - Downloaded HTML files are saved but not categorized yet
 #7
-Program will need to create a local MySQL database for the user during the initial setup/installation
-    SQLite may be a better solution if we don't need MySQL features
-        - MySQL works better if the database needs to hosted on a remote server (allows multiple users to access the same database at once)
-        - SQLite works better if the database will be stored locally (only that user will have access to the database)
+Receiving error message in terminal: 'Error reading file: Error: ENOENT: no such file or directory', but the files seem to download just fine
 #8
-Some visual cue after pressing download to indicate that the download is happening. So the user doesn't think the site is broken or anything
+Front end needs to return saved database items to the user 
+    - Functionality exists in the database to return saved websites as a javascript object, but is not implemented in the front end yet

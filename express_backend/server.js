@@ -3,6 +3,7 @@ const cors = require('cors');
 const path = require('path');
 const { exec } = require('child_process'); // Import child_process module
 const fs = require('fs'); // "File System" used to search index.html for exact html file
+const { insertWebsite, deleteWebsite, queryAll, sortWebsites } = require('../database/database.js'); // Import SQLite functions
 
 function extractUrl(filename) {
     try {
@@ -23,7 +24,7 @@ function extractAfterLastSlash(url) {
     return url.split('/').pop();
 }
 
-function moveFile(sourcePath, destinationPath) {
+function moveFile(sourcePath, url, destinationPath) {
     // Ensure the destination directory exists
     const destinationDir = path.dirname(destinationPath); // Get the directory from the destination path
     if (!fs.existsSync(destinationDir)) {
@@ -38,6 +39,11 @@ function moveFile(sourcePath, destinationPath) {
             console.log(`File moved successfully to ${destinationPath}`);
         }
     });
+
+    // Add file data to database
+    const fullPath = path.resolve(destinationPath)
+    let title = readHtmlTitle(fullPath);
+    insertWebsite(url, title, fullPath);
 }
 
 // Deletes everything but the desired HTML doc
@@ -68,22 +74,14 @@ function cleanUpDatabase(excludeFolder) {
 }
 
 function readHtmlTitle(filePath) {
-    // Read the HTML file
-    fs.readFile(filePath, 'utf-8', (err, data) => {
-        if (err) {
-            console.error(`Error reading file: ${err}`);
-            return;
-        }
-
-        // Use a regular expression to extract the <title> tag content
+    try {
+        const data = fs.readFileSync(filePath, 'utf-8');
         const titleMatch = data.match(/<title>(.*?)<\/title>/i);
-        
-        if (titleMatch && titleMatch[1]) {
-            console.log(`Page Title: ${titleMatch[1]}`);
-        } else {
-            console.log('No title found in the HTML file.');
-        }
-    });
+        return titleMatch && titleMatch[1] ? titleMatch[1] : 'No Title';
+    } catch (error) {
+        console.error(`Error reading file: ${error}`);
+        return 'No Title';
+    }
 }
 
 
@@ -140,12 +138,13 @@ app.post('/api/save-link', (req, res) => {
       if (url == null) {
           return res.status(200).json({ message: 'Link failed' }); // Link extraction failed
       } else {
-          const destinationFilePath = path.join(__dirname, 'WebsiteTempDatabase', 'DownloadedHTML', DownloadedHTMLfile); // Destination path for the file
+          //const destinationFilePath = path.join(__dirname, 'WebsiteTempDatabase', 'DownloadedHTML', DownloadedHTMLfile); // Destination path for the file
+          const destinationFilePath = path.join('../database', 'Websites', DownloadedHTMLfile); // Destination path for the database
 
           try {
-              moveFile(path.join('WebsiteTempDatabase', url), destinationFilePath); // Move the wanted file
+              moveFile(path.join('WebsiteTempDatabase', url), url, destinationFilePath); // Move the wanted file
               cleanUpDatabase('DownloadedHTML'); // Clean up everything except DownloadedHTML folder
-              readHtmlTitle(destinationFilePath); // Read the HTML title
+              console.log(`Page Title: ${readHtmlTitle(destinationFilePath)}`); // Read the HTML title
               return res.status(200).json({ message: 'Link saved, command executed, and cleanup completed!' }); // Success response
 
           } catch (error) {
