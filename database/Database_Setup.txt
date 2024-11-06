@@ -11,6 +11,7 @@ Database setup
 Installing SQLite
     1. Navigate to database folder in the terminal
     2. Type nmp i sqlite3
+    3. Do the same thing to install sqlite3 in the express_backend folder
 
 Viewing the database in VSCode
     1. Search for the extension "SQLite"
