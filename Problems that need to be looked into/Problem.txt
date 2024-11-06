@@ -1,21 +1,23 @@
 #1 
 Some downloaded html files don't open correctly in chrome, but will open correct in safari and Firefox
+
 #2 
-Program exits if it fails to download link
+need to fix ability to download the same site multiple times in SQL database, write over issue or something
+ 
 #3
-Connect sql to backend
-    - Connected and saves the html file
-    - Does not save the files deleted by cleanUpDatabase function
-#4
-The same url can be entered multiple times instead of once
-#5
-A name need to be sent to Chris fo this data base
-    - Name can be extracted from html file and appears in console.log, but for some reason returns undefined when saving the title in a variable
-#6
-Data base needs to be made. downloaded html files need to be categorized correctly in the data base
-    - Downloaded HTML files are saved but not categorized yet
-#7
 Receiving error message in terminal: 'Error reading file: Error: ENOENT: no such file or directory', but the files seem to download just fine
-#8
+//race condition between two console commands, it is kinda fine just visible by console
+#4
 Front end needs to return saved database items to the user 
     - Functionality exists in the database to return saved websites as a javascript object, but is not implemented in the front end yet
+#5 
+Queue is being made by Miah for the front end
+
+#6
+On windows version the software the function extractUrl() seems to stop the program. A possible path find in function might be causing it, it works on linux 
+
+
+#****#
+Features wants list:
+Encrypt data base
+Pdf file shower

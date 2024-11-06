@@ -6,6 +6,18 @@ const fs = require('fs');
 const path = require('path');
 
 function insertWebsite(web_url, title, file_path) {
+
+    // this file isnt saved to github, this function builds the database after fresh clone
+    const filePath = path.join(__dirname, 'websites.db');
+    if (!fs.existsSync(filePath)) {
+        // File doesn't exist, so create it with initial content
+        fs.writeFileSync(filePath, 'Initial content', 'utf-8');
+        console.log("File created:", filePath);
+    } else {
+        console.log("File already exists:", filePath);
+    }
+
+
     const database = new sqlite3.Database(path.join(__dirname, 'websites.db'), sqlite3.OPEN_READWRITE, (err) => {
         if(err) {return console.error(err.message);}
     });
