@@ -2,3 +2,4 @@
 # modules
 express_backend/node_modules
 database/node_modules
+database/*.db
