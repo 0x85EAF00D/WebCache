@@ -10,13 +10,13 @@ const SavePage = () => {
   const formatURL = (url) => {
     let formattedURL = url.trim();
     
-    // Remove any existing http:// or https:// to standardize the URL
-    formattedURL = formattedURL.replace(/^(https?:\/\/)?(www\.)?/, '');
-    
-    // Add https://www. if it's missing
-    if (!formattedURL.startsWith('https://www.')) {
-      formattedURL = `https://www.${formattedURL}`;
+    // If URL already starts with http:// or https://, return it as is
+    if (formattedURL.match(/^https?:\/\//)) {
+      return formattedURL;
     }
+    
+    // Add https:// if missing
+    formattedURL = `https://${formattedURL}`;
     
     return formattedURL;
   };
