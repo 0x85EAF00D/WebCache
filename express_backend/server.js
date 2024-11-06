@@ -39,11 +39,6 @@ function moveFile(sourcePath, url, destinationPath) {
             console.log(`File moved successfully to ${destinationPath}`);
         }
     });
-
-    // Add file data to database
-    const fullPath = path.resolve(destinationPath)
-    let title = readHtmlTitle(fullPath);
-    insertWebsite(url, title, fullPath);
 }
 
 // Deletes everything but the desired HTML doc
@@ -142,10 +137,16 @@ app.post('/api/save-link', (req, res) => {
           const destinationFilePath = path.join('../database', 'Websites', DownloadedHTMLfile); // Destination path for the database
 
           try {
-              moveFile(path.join('WebsiteTempDatabase', url), url, destinationFilePath); // Move the wanted file
-              cleanUpDatabase('DownloadedHTML'); // Clean up everything except DownloadedHTML folder
-              console.log(`Page Title: ${readHtmlTitle(destinationFilePath)}`); // Read the HTML title
-              return res.status(200).json({ message: 'Link saved, command executed, and cleanup completed!' }); // Success response
+            moveFile(path.join('WebsiteTempDatabase', url), url, destinationFilePath); // Move the wanted file
+            cleanUpDatabase('DownloadedHTML'); // Clean up everything except DownloadedHTML folder
+              
+            // Add file data to database
+            const fullPath = path.resolve(destinationFilePath);
+            console.log(`Fullpath: ${fullPath}`);
+            let title = readHtmlTitle(destinationFilePath);
+            console.log(`Page Title: ${title}`); // Read the HTML title
+            insertWebsite(url, title, fullPath);
+            return res.status(200).json({ message: 'Link saved, command executed, and cleanup completed!' }); // Success response
 
           } catch (error) {
               console.error("Error processing file operations:", error.message);
