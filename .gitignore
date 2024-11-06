@@ -1,0 +1,4 @@
+# ignore All node module files so each user has to install device specfic 
+# modules
+WebCache/express_backend/node_modules
+WebCache/database/node_modules
