@@ -9,17 +9,21 @@ const SavePage = () => {
 
   const formatURL = (url) => {
     let formattedURL = url.trim();
-    
-    // If URL already starts with http:// or https://, return it as is
-    if (formattedURL.match(/^https?:\/\//)) {
+  
+    // If the URL starts with "https://" or "http://", return it as is
+    if (formattedURL.startsWith("https://") || formattedURL.startsWith("http://")) {
       return formattedURL;
+    } else if  (formattedURL.startsWith("www")) {
+      // Add "https://" if the URL does not start with a protocol
+      formattedURL = `https://${formattedURL}`;
+    }else{
+      formattedURL = `https://www.${formattedURL}`;
     }
-    
-    // Add https:// if missing
-    formattedURL = `https://${formattedURL}`;
-    
+  
     return formattedURL;
   };
+  
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
