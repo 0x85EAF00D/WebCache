@@ -1,0 +1,9 @@
+{
+  "name": "webcache-main",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install": "node -e \"const os = require('os'); const { execSync } = require('child_process'); try { if (os.platform() === 'darwin') { execSync('brew --version'); console.log('Homebrew is installed'); try { execSync('brew list httrack'); console.log('httrack is installed'); } catch { console.log('httrack is not installed. You can install it with: brew install httrack'); process.exit(1); } } else if (os.platform() === 'win32') { execSync('choco -v'); console.log('Chocolatey is installed'); try { execSync('choco list --local-only httrack'); console.log('httrack is installed'); } catch { console.log('httrack is not installed. You can install it with: choco install httrack'); process.exit(1); } } else { console.log('Unsupported OS for this script.'); process.exit(1); } } catch { console.log('Required package manager (Homebrew or Chocolatey) is not installed.'); process.exit(1); }\" && npm install --prefix ./database && npm install --prefix ./express_backend",
+    "start": "npm start --prefix ./express_backend"
+  }
+}

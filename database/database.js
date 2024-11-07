@@ -1,38 +1,86 @@
-//Eventually this file will talk to server.js to save websites
-//For now, run this this file in the terminal to test its functionality
-
 const sqlite3 = require('sqlite3').verbose();
 const fs = require('fs');
 const path = require('path');
 
-function insertWebsite(web_url, title, file_path) {
-    const database = new sqlite3.Database(path.join(__dirname, 'websites.db'), sqlite3.OPEN_READWRITE, (err) => {
-        if(err) {return console.error(err.message);}
+function initializeDatabase(web_url, title, file_path) {
+    const filePath = path.join(__dirname, 'websites.db');
+    // Create a new database (or open if it exists)
+    const db = new sqlite3.Database(filePath, (err) => {
+      if (err) {
+        console.error("Error opening database:", err.message);
+        return;
+      }
+      console.log("Database opened successfully.");
+    });
+  
+    // Create tables and insert initial data
+    db.serialize(() => {
+      // Example table: websites
+      db.run(`CREATE TABLE IF NOT EXISTS websites (
+        web_url TEXT PRIMARY KEY,
+        title TEXT,
+        file_path TEXT NOT NULL,
+        created DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`);
+  
+      // Insert initial data
+    const query = `INSERT INTO websites (web_url, title, file_path) VALUES (?, ?, ?)`;
+    db.run(query, [web_url, title, file_path], (err) => {
+    if (err) {
+        console.error("Error inserting data:", err.message);
+    } else {
+        console.log("Initial data inserted.");
+    }
     });
 
-    //Checks if the website already exists in the database
-    let query = fs.readFileSync(path.join(__dirname, 'SQL', 'check_duplicates.sql'), 'utf-8');
-    database.get(query, [web_url], (err, row) => {
-        if(err) {return console.error(err);}
-        //If website already exists, overwrite with updated data
-        if(row) {
-            query = fs.readFileSync(path.join(__dirname, 'SQL', 'overwrite_duplicate.sql'), 'utf-8');
-            database.run(query, [title, file_path, web_url], (err) => {
-                if(err) return console.error(err.message);
-            });
-            //Confirmation for testing
-            console.log(`Website data for ${title} has been updated in the database.`);
-        } else {
-            //Otherwise, runs SQL query to insert website into database table
-            query = fs.readFileSync(path.join(__dirname, 'SQL', 'insert_website.sql'), 'utf-8');
-            database.run(query, [web_url, title, file_path], (err) => {
-                if(err) return console.error(err.message);
-            });
-            //Confirmation for testing
-            console.log(`${title} has been added to the database.`);
-        }
     });
-    database.close();
+  
+    // Close the database connection
+    db.close((err) => {
+      if (err) {
+        console.error("Error closing database:", err.message);
+      } else {
+        console.log("Database closed successfully.");
+      }
+    });
+  }
+  
+function insertWebsite(web_url, title, file_path) {
+    // this file isnt saved to github, this function builds the database after fresh clone
+    const filePath = path.join(__dirname, 'websites.db');
+    if (!fs.existsSync(filePath)) {
+        // File doesn't exist, so create it with initial content
+        initializeDatabase(web_url, title, file_path);
+        console.log("File created:", filePath);
+    } else {
+        console.log("File already exists:", filePath);
+        const database = new sqlite3.Database(path.join(__dirname, 'websites.db'), sqlite3.OPEN_READWRITE, (err) => {
+            if(err) {return console.error(err.message);}
+        });
+        //Checks if the website already exists in the database
+        let query = fs.readFileSync(path.join(__dirname, 'SQL', 'check_duplicates.sql'), 'utf-8');
+        database.get(query, [web_url], (err, row) => {
+            if(err) {return console.error(err);}
+            //If website already exists, overwrite with updated data
+            if(row) {
+                query = fs.readFileSync(path.join(__dirname, 'SQL', 'overwrite_duplicate.sql'), 'utf-8');
+                database.run(query, [title, file_path, web_url], (err) => {
+                    if(err) return console.error(err.message);
+                });
+                //Confirmation for testing
+                console.log(`Website data for ${title} has been updated in the database.`);
+            } else {
+                //Otherwise, runs SQL query to insert website into database table
+                query = fs.readFileSync(path.join(__dirname, 'SQL', 'insert_website.sql'), 'utf-8');
+                database.run(query, [web_url, title, file_path], (err) => {
+                    if(err) return console.error(err.message);
+                });
+                //Confirmation for testing
+                console.log(`${title} has been added to the database.`);
+            }
+        });
+        database.close();
+    }
 }
 
 function deleteWebsite(web_url, title) {
@@ -66,23 +114,6 @@ function queryAll() {
     database.close();
 }
 
-function duplicates(website) {
-    const database = new sqlite3.Database(path.join(__dirname, 'websites.db'), sqlite3.OPEN_READWRITE, (err) => {
-        if(err) {return console.error(err.message);}
-    });
-    let query = `SELECT web_url FROM websites 
-                    WHERE web_url = ?;`;
-    database.get(query, [website], (err, row) => {
-        if (err) {return console.error(err);}
-        if(row) {
-            console.log(row.web_url);
-        } else {
-            console.log("Not found");
-        }
-    });
-    database.close();
-}
-
 function sortWebsites() {
     const database = new sqlite3.Database(path.join(__dirname, 'websites.db'), sqlite3.OPEN_READWRITE, (err) => {
         if(err) {return console.error(err.message);}
@@ -97,14 +128,6 @@ function sortWebsites() {
     });
     database.close();
 }
-
-//Testing the functions
-//insertWebsite('www.apple.com', 'Apple', './apple');
-//queryAll();
-duplicates("www.apple.com");
-
-//deleteWebsite('www.apple.com', 'Apple');
-//sortWebsites();
 
 //Export the functions to server.js
 module.exports = { insertWebsite, deleteWebsite, queryAll, sortWebsites };
