@@ -1,6 +1,7 @@
 # ignore All node module files so each user has to install device specfic 
 # modules
 express_backend/node_modules
+express_backend/WebsiteTempDatabase
 database/node_modules
 database/*.db
 database/Websites
