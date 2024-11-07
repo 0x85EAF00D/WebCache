@@ -11,6 +11,7 @@ The same url can be entered multiple times instead of once
 #5
 A name need to be sent to Chris fo this data base
     - Name can be extracted from html file and appears in console.log, but for some reason returns undefined when saving the title in a variable
+    - Name is successfully extracted when overwriting an existing website file, but not when inserting it in the database for the first time
 #6
 Data base needs to be made. downloaded html files need to be categorized correctly in the data base
     - Downloaded HTML files are saved but not categorized yet
