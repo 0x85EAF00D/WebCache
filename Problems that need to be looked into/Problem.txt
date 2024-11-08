@@ -2,6 +2,8 @@
 Some downloaded html files don't open correctly in chrome, but will open correct in safari and Firefox
 Receiving error message in terminal: 'Error reading file: Error: ENOENT: no such file or directory', but the files seem to download just fine
 //race condition between two console commands, it is kinda fine just visible by console
+#2
+Title isn't always extracted. Sometimes the title is only saved after redownloading a website
 #4
 Front end needs to return saved database items to the user 
     - Functionality exists in the database to return saved websites as a javascript object, but is not implemented in the front end yet
