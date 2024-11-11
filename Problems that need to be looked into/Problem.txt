@@ -11,6 +11,9 @@ On windows version the software the function extractUrl() seems to stop the prog
 #4
 a way for server responses to user front end to close after like 5-10 seconds - miah is working on it
 
+#5 
+Having trouble downloading two pages from the same website. They're saving under the same page title and it says the database already exists. i.e. https://preppykitchen.com/gingerbread-cupcakes/ and https://preppykitchen.com/waffle-recipe/. Only one HTML file is getting saved
+
 #****#
 Features wants list:
 Encrypt data base - lal is working on it
