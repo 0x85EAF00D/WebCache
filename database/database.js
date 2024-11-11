@@ -51,9 +51,9 @@ function insertWebsite(web_url, title, file_path) {
     if (!fs.existsSync(filePath)) {
         // File doesn't exist, so create it with initial content
         initializeDatabase(web_url, title, file_path);
-        console.log("File created:", filePath);
+        console.log("Data Base created:", filePath);
     } else {
-        console.log("File already exists:", filePath);
+        console.log("Data Base already exists:", filePath);
         const database = new sqlite3.Database(path.join(__dirname, 'websites.db'), sqlite3.OPEN_READWRITE, (err) => {
             if(err) {return console.error(err.message);}
         });

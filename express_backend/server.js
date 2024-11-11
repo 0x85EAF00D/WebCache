@@ -76,8 +76,8 @@ function cleanUpDatabase(excludeFolder) {
 function readHtmlTitle(filePath) {
     try {
         const data = fs.readFileSync(filePath, 'utf-8');
-        const titleMatch = data.match(/<title>(.*?)<\/title>/i);
-        return titleMatch && titleMatch[1] ? titleMatch[1] : 'No Title';
+        const titleMatch = data.match(/<title[^>]*>([^<]*)<\/title>/i);
+        return titleMatch && titleMatch[1].trim() ? titleMatch[1].trim() : 'No Title';
     } catch (error) {
         console.error(`Error reading file: ${error}`);
         return 'No Title';
@@ -95,6 +95,20 @@ function isFileInDirectory(directory, fileName) {
     const files = fs.readdirSync(directory);
     return files.includes(fileName);
 }
+
+function delay(ms) {
+    // used like: await delay(2000); // waits for 2 seconds
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+
+
+
+
+
+
+
+
 const app = express();
 const port = 3000;
 
@@ -113,7 +127,7 @@ app.get('*', (req, res) => {
 });
 
 // Example POST endpoint
-app.post('/api/save-link', (req, res) => {
+app.post('/api/save-link', async (req, res) => {
   const { link } = req.body;
   if (!link) {
     return res.status(400).json({ message: 'Link is required' });
@@ -126,9 +140,9 @@ app.post('/api/save-link', (req, res) => {
     // -r2 means recusive depth of 0 or just the current page plus one link away for the most infomation on the current page
     // -%eN0 means to set the external links depth to 0
     // -O is the output directory
-    console.log(`Running Command: "httrack ${link} -r2 -O WebsiteTempDatabase -%eN0"`);
-    const command = `httrack ${link} -r2  -O WebsiteTempDatabase -%eN0`;
-  exec(command, (err, stdout, stderr) => {
+    console.log(`Running Command: "httrack ${link} -r1 -O WebsiteTempDatabase -%eN0"`);
+    const command = `httrack ${link} -r1  -O WebsiteTempDatabase -%eN0`;
+  exec(command, async (err, stdout, stderr) => {
     if (err) {
       console.error('Error executing command:', err);
       return res.status(500).json({ message: 'Failed to execute command' });
@@ -152,19 +166,20 @@ app.post('/api/save-link', (req, res) => {
         const destinationFilePath = path.join('../database', 'Websites', WEBsite, DownloadedHTMLfile); // Destination path for the database
 
         moveFile(path.join('WebsiteTempDatabase', Nohttps), Nohttps, destinationFilePath); // Move the wanted file
+        await delay(2000);
         cleanUpDatabase('DownloadedHTML'); // Clean up everything except DownloadedHTML folder
-                
+        await delay(2000);     
         // Add file data to database
         const fullPath = path.resolve(destinationFilePath);
         console.log(`Fullpath: ${fullPath}`);
         const title = removeLastFourChars(DownloadedHTMLfile);
         console.log(`Page Title: ${title}`); // Read the title
         insertWebsite(Nohttps, title, fullPath);
-        return res.status(200).json({ message: 'Link saved, command executed, and cleanup completed!' }); // Success response
-
+        return res.status(200).json({ message: `Link saved: ${link}` }); // Success response
+        
         } catch (error) {
-            console.error("Error processing file operations:", error.message);
-            return res.status(500).json({ message: 'An error occurred during file processing' }); // Error response
+            console.error(`Error processing file operations from: ${link}`, error.message);
+            return res.status(500).json({ message: `An error occurred during file processing from: ${link}` }); // Error response
         }
 
       }
@@ -173,7 +188,7 @@ app.post('/api/save-link', (req, res) => {
         console.log(`HTML Wanted File: ${DownloadedHTMLfile}`);
         console.log(`Extracted URL: ${url}`);
         const WEBsite = removeAfterFirstSlash(url);
-        console.log(WEBsite); 
+        console.log(`Extracted domain: ${WEBsite}`); 
 
         // check that helps the backend stop from failing after error input
         if (url == null) {
@@ -184,20 +199,22 @@ app.post('/api/save-link', (req, res) => {
             const destinationFilePath = path.join('../database', 'Websites', WEBsite, DownloadedHTMLfile); // Destination path for the database
 
             try {
-                moveFile(path.join('WebsiteTempDatabase', url), url, destinationFilePath); // Move the wanted file
-                cleanUpDatabase('DownloadedHTML'); // Clean up everything except DownloadedHTML folder
                 
+                moveFile(path.join('WebsiteTempDatabase', url), url, destinationFilePath); // Move the wanted file
+                await delay(2000);
+                cleanUpDatabase('DownloadedHTML'); // Clean up everything except DownloadedHTML folder
+                await delay(2000);
                 // Add file data to database
                 const fullPath = path.resolve(destinationFilePath);
                 console.log(`Fullpath: ${fullPath}`);
                 let title = readHtmlTitle(destinationFilePath);
                 console.log(`Page Title: ${title}`); // Read the HTML title
                 insertWebsite(url, title, fullPath);
-                return res.status(200).json({ message: 'Link saved, command executed, and cleanup completed!' }); // Success response
-
+                return res.status(200).json({ message: `Link saved: ${link}` }); // Success response
+        
             } catch (error) {
-                console.error("Error processing file operations:", error.message);
-                return res.status(500).json({ message: 'An error occurred during file processing' }); // Error response
+                console.error(`Error processing file operations from: ${link}`, error.message);
+                return res.status(500).json({ message: `An error occurred during file processing from: ${link}` }); // Error response
             }
         }
     }
