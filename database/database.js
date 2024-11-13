@@ -101,38 +101,29 @@ function deleteWebsite(web_url, title) {
 
 //Returns table of saved websites in an array of objects
 function queryAll() {
-    const database = new sqlite3.Database(path.join(__dirname, 'websites.db'), sqlite3.OPEN_READWRITE, (err) => {
-        if(err) {return console.error(err.message);}
+    return new Promise((resolve, reject) => {
+        const database = new sqlite3.Database(path.join(__dirname, 'websites.db'), sqlite3.OPEN_READWRITE, (err) => {
+            if(err) {return console.error(err.message);}
+        });
+        let query = `SELECT * FROM websites;`;
+        database.all(query, [], (err, rows) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(rows);
+            }
+            database.close();
+        });
     });
-    let query = `SELECT * FROM websites;`;
-    database.all(query, [], (err, rows) => {
-        if (err) {return console.error(err);}
-        console.log('Displaying table rows:')
-        for (let row of rows) {
-            console.log(row);
-        }
-    });
-    database.close();
 }
 
-function sortWebsites() {
-    const database = new sqlite3.Database(path.join(__dirname, 'websites.db'), sqlite3.OPEN_READWRITE, (err) => {
-        if(err) {return console.error(err.message);}
-    });
-    let query = fs.readFileSync(path.join(__dirname, 'SQL', 'sort_websites.sql'), 'utf-8');
-    database.all(query, [], (err, rows) => {
-        if (err) {return console.error(err);}
-        console.log('Displaying table sorted by title:')
-        for (let row of rows) {
-            console.log(row);
-        }
-    });
-    database.close();
+async function getWebsites() {
+    let websites = await queryAll();
+    return websites;
 }
-
 
 //Export the functions to server.js
-module.exports = { insertWebsite, deleteWebsite, queryAll, sortWebsites };
+module.exports = { insertWebsite, deleteWebsite, getWebsites };
 
 
 
