@@ -100,7 +100,7 @@ function deleteWebsite(web_url, title) {
 }
 
 //Returns table of saved websites in an array of objects
-function queryAll() {
+function getWebsites() {
     return new Promise((resolve, reject) => {
         const database = new sqlite3.Database(path.join(__dirname, 'websites.db'), sqlite3.OPEN_READWRITE, (err) => {
             if(err) {return console.error(err.message);}
@@ -117,10 +117,10 @@ function queryAll() {
     });
 }
 
-async function getWebsites() {
-    let websites = await queryAll();
-    return websites;
-}
+// async function getWebsites() {
+//     let websites = await queryAll();
+//     return websites;
+// }
 
 //Export the functions to server.js
 module.exports = { insertWebsite, deleteWebsite, getWebsites };

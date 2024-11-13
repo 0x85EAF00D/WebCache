@@ -4,7 +4,6 @@ const path = require('path');
 const { exec } = require('child_process'); // Import child_process module
 const fs = require('fs'); // "File System" used to search index.html for exact html file
 const { insertWebsite, deleteWebsite, getWebsites } = require('../database/database.js'); // Import SQLite functions
-    // Note that getWebsites must be run inside an async function using await
 
 const crypto = require('crypto'); // Import crypto for encryption and decryption
 
@@ -165,7 +164,7 @@ app.get('/api/get-links', async (req, res) => {
     console.log('Load page endpoint was hit.');
 
     try {
-        const websites = await queryAll();
+        const websites = await getWebsites();
         console.log('Fetched websites:', websites); // Debug log
 
         // Check if websites is undefined or null
