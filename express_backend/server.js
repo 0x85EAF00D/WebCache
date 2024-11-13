@@ -5,6 +5,41 @@ const { exec } = require('child_process'); // Import child_process module
 const fs = require('fs'); // "File System" used to search index.html for exact html file
 const { insertWebsite, deleteWebsite, queryAll, sortWebsites } = require('../database/database.js'); // Import SQLite functions
 
+const crypto = require('crypto'); // Import crypto for encryption and decryption
+
+// Encryption and Decryption Key (ideally should be stored securely, e.g., in environment variables)
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'your-256-bit-secret';  // 32-byte key (256-bit)
+const IV_LENGTH = 16;  // AES block size (128-bit)
+
+// Encrypt user data
+function encryptUserData(data) {
+    try {
+        const iv = crypto.randomBytes(IV_LENGTH); // Generate a random initialization vector
+        const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(ENCRYPTION_KEY), iv); // Create a cipher instance
+        let encryptedData = cipher.update(data, 'utf8', 'hex'); // Encrypt the data
+        encryptedData += cipher.final('hex'); // Finalize the encryption
+        return { iv: iv.toString('hex'), encryptedData }; // Return the IV and the encrypted data
+    } catch (error) {
+        console.error('Error encrypting data:', error.message);
+        throw new Error('Encryption failed'); // Throw an error if something goes wrong
+    }
+}
+
+// Decrypt user data
+function decryptUserData(encryptedData, iv) {
+    try {
+        const ivBuffer = Buffer.from(iv, 'hex'); // Convert the IV from hex to a Buffer
+        const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(ENCRYPTION_KEY), ivBuffer); // Create a decipher instance
+        let decryptedData = decipher.update(encryptedData, 'hex', 'utf8'); // Decrypt the data
+        decryptedData += decipher.final('utf8'); // Finalize the decryption
+        return decryptedData; // Return the decrypted data
+    } catch (error) {
+        console.error('Error decrypting data:', error.message);
+        throw new Error('Decryption failed'); // Throw an error if something goes wrong
+    }
+}
+
+
 function extractUrl(filename) {
     try {
         const content = fs.readFileSync(filename, 'utf-8');
@@ -126,6 +161,8 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
+
+
 // Example POST endpoint
 app.post('/api/save-link', async (req, res) => {
   const { link } = req.body;
@@ -210,6 +247,9 @@ app.post('/api/save-link', async (req, res) => {
                 let title = readHtmlTitle(destinationFilePath);
                 console.log(`Page Title: ${title}`); // Read the HTML title
                 insertWebsite(url, title, fullPath);
+                
+
+                
                 return res.status(200).json({ message: `Link saved: ${link}` }); // Success response
         
             } catch (error) {
@@ -217,6 +257,8 @@ app.post('/api/save-link', async (req, res) => {
                 return res.status(500).json({ message: `An error occurred during file processing from: ${link}` }); // Error response
             }
         }
+
+
     }
   });
 });
