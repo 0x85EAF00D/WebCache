@@ -99,6 +99,7 @@ function deleteWebsite(web_url, title) {
     database.close();
 }
 
+//Returns table of saved websites in an array of objects
 function queryAll() {
     const database = new sqlite3.Database(path.join(__dirname, 'websites.db'), sqlite3.OPEN_READWRITE, (err) => {
         if(err) {return console.error(err.message);}
@@ -108,7 +109,7 @@ function queryAll() {
         if (err) {return console.error(err);}
         console.log('Displaying table rows:')
         for (let row of rows) {
-            console.log(rows[row]);
+            console.log(row);
         }
     });
     database.close();
@@ -123,11 +124,12 @@ function sortWebsites() {
         if (err) {return console.error(err);}
         console.log('Displaying table sorted by title:')
         for (let row of rows) {
-            console.log(rows[row]);
+            console.log(row);
         }
     });
     database.close();
 }
+
 
 //Export the functions to server.js
 module.exports = { insertWebsite, deleteWebsite, queryAll, sortWebsites };
