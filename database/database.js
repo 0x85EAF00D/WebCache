@@ -108,7 +108,7 @@ function queryAll() {
         if (err) {return console.error(err);}
         console.log('Displaying table rows:')
         for (let row of rows) {
-            console.log(rows[row]);
+            console.log(row);
         }
     });
     database.close();
@@ -128,6 +128,7 @@ function sortWebsites() {
     });
     database.close();
 }
+
 
 //Export the functions to server.js
 module.exports = { insertWebsite, deleteWebsite, queryAll, sortWebsites };
