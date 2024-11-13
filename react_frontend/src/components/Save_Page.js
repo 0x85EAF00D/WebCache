@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styles from './SavePage.module.css';
+import Notification from './Notification';
 
 const SavePage = () => {
   const [link, setLink] = useState('');
   const [error, setError] = useState('');
   const [queue, setQueue] = useState([]);
+  const [notification, setNotification] = useState(null);
   const loadingLinks = useRef(new Set());
 
   // Format the URL before proceeding
@@ -80,9 +82,9 @@ const SavePage = () => {
         const result = await response.json();
 
         if (response.ok) {
-          alert(`${result.message}`);
+          setNotification({ message: result.message, type: 'success' });
         } else {
-          alert(`Error: ${result.message}`);
+          setNotification({ message: `Error: ${result.message}`, type: 'error' });
         }
       } catch (error) {
         console.error('Error:', error);
@@ -127,6 +129,14 @@ const SavePage = () => {
         </button>
       </form>
       {error && <p style={{ color: 'red' }}>{error}</p>}
+
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
 
       <div className={styles.queueList}>
         <h2>Queue Status</h2>
