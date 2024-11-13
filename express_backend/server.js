@@ -156,6 +156,51 @@ app.use(express.json());
 // Serve static files from the 'build' folder
 app.use(express.static(path.join(__dirname, 'build')));
 
+
+
+// API Routes should come BEFORE the catch-all route
+//this is the load page endpoint
+app.get('/api/get-links', async (req, res) => {
+    console.log('Load page endpoint was hit.');
+
+    try {
+        const websites = await queryAll();
+        console.log('Fetched websites:', websites); // Debug log
+
+        // Check if websites is undefined or null
+        if (!websites) {
+            console.log('No websites found in database');
+            return res.send(`
+                <div class="websites-container">
+                    <div class="no-websites">No websites found</div>
+                </div>
+            `);
+        }
+
+        // Convert the data to HTML format
+        const html = `
+            <div class="websites-container">
+                ${Array.isArray(websites) ? websites.map(website => `
+                    <div class="website-item">
+                        <a class="website-link" href="${website?.link || '#'}">${website?.link || 'No Link'}</a>
+                        <div class="website-title">${website?.title || 'No Title'}</div>
+                        <div class="website-date">${website?.savedAt ? new Date(website.savedAt).toLocaleDateString() : 'No Date'}</div>
+                    </div>
+                `).join('') : '<div class="error">Invalid data format</div>'}
+            </div>
+        `;
+        res.send(html);
+    } catch (error) {
+        console.error('Error fetching websites:', error);
+        res.status(500).send('<div class="error">Failed to fetch websites</div>');
+    }
+});
+
+
+
+
+
+
 // Serve the index.html for all routes (for React Router or other SPA)
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'build', 'index.html'));
