@@ -1,4 +1,4 @@
-const { insertWebsite, deleteWebsite, getWebsites, sortWebsites, stringifySites } = require('./database.js'); // Import SQLite functions
+const { insertWebsite, deleteWebsite, getWebsites } = require('./database.js'); // Import SQLite functions
 
 async function displayWebsiteData() {
     let sites = await getWebsites();
@@ -11,5 +11,3 @@ async function displayWebsiteData() {
 }
 
 displayWebsiteData();
-
-
