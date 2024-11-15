@@ -1,14 +1,14 @@
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
-const { exec } = require('child_process'); // Import child_process module
-const fs = require('fs'); // "File System" used to search index.html for exact html file
-const { 
-    insertWebsite, 
-    deleteWebsite, 
-    getWebsites,
-    getFilePath 
-} = require('../database/database.js'); // Import SQLite functions
+const express = require("express");
+const cors = require("cors");
+const path = require("path");
+const { exec } = require("child_process"); // Import child_process module
+const fs = require("fs"); // "File System" used to search index.html for exact html file
+const {
+  insertWebsite,
+  deleteWebsite,
+  getWebsites,
+  getFilePath,
+} = require("../database/database.js"); // Import SQLite functions
 
 const crypto = require("crypto"); // Import crypto for encryption and decryption
 
@@ -117,22 +117,79 @@ function moveFile(sourcePath, url, destinationPath) {
     );
   }
 
-  // Normalize paths for cross-platform compatibility
-  sourcePath = path.normalize(sourcePath);
-  destinationPath = path.normalize(destinationPath);
-
-  // Ensure the destination directory exists
-  const destinationDir = path.dirname(destinationPath);
-  if (!fs.existsSync(destinationDir)) {
-    fs.mkdirSync(destinationDir, { recursive: true });
-  }
-
-  // Move the file with proper error handling
   try {
-    fs.renameSync(sourcePath, destinationPath);
-    console.log(`File moved successfully to ${destinationPath}`);
+    // Normalize paths for cross-platform compatibility
+    // This converts forward slashes to backslashes on Windows and vice versa
+    sourcePath = path.normalize(sourcePath);
+    destinationPath = path.normalize(destinationPath);
+
+    // Log the normalized paths for debugging
+    console.log("Normalized source path:", sourcePath);
+    console.log("Normalized destination path:", destinationPath);
+
+    // Create all necessary directories in the source path
+    const sourceDir = path.dirname(sourcePath);
+    if (!fs.existsSync(sourceDir)) {
+      fs.mkdirSync(sourceDir, { recursive: true, mode: 0o755 }); // Add mode for Unix permissions
+      console.log(`Created source directory: ${sourceDir}`);
+    }
+
+    // Create all necessary directories in the destination path
+    const destinationDir = path.dirname(destinationPath);
+    if (!fs.existsSync(destinationDir)) {
+      fs.mkdirSync(destinationDir, { recursive: true, mode: 0o755 }); // Add mode for Unix permissions
+      console.log(`Created destination directory: ${destinationDir}`);
+    }
+
+    // Check if source file exists
+    if (!fs.existsSync(sourcePath)) {
+      throw new Error(`Source file does not exist: ${sourcePath}`);
+    }
+
+    // Check if destination file already exists
+    if (fs.existsSync(destinationPath)) {
+      console.log(
+        `Destination file already exists, removing: ${destinationPath}`
+      );
+      fs.unlinkSync(destinationPath);
+    }
+
+    // Try to move the file using rename
+    try {
+      fs.renameSync(sourcePath, destinationPath);
+      console.log(`File moved successfully to ${destinationPath}`);
+    } catch (renameError) {
+      // If rename fails (e.g., across different devices), fall back to copy and delete
+      if (renameError.code === "EXDEV") {
+        console.log(
+          "Cross-device move detected, falling back to copy and delete"
+        );
+        fs.copyFileSync(sourcePath, destinationPath);
+        fs.unlinkSync(sourcePath);
+        console.log(
+          `File copied and deleted successfully to ${destinationPath}`
+        );
+      } else {
+        throw renameError;
+      }
+    }
+
+    // Verify the move was successful
+    if (!fs.existsSync(destinationPath)) {
+      throw new Error("Move operation failed: destination file does not exist");
+    }
+
+    return true;
   } catch (err) {
-    console.error(`Error moving file: ${err}`);
+    console.error("Error in moveFile:", err);
+    console.error("Error details:", {
+      error: err.message,
+      code: err.code,
+      sourcePath,
+      destinationPath,
+      sourceExists: fs.existsSync(sourcePath),
+      destDirExists: fs.existsSync(path.dirname(destinationPath)),
+    });
     throw err;
   }
 }
