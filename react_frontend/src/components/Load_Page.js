@@ -7,6 +7,7 @@ const LoadPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [debugInfo, setDebugInfo] = useState(null);
 
   useEffect(() => {
     fetchWebsites();
@@ -50,20 +51,88 @@ const LoadPage = () => {
     const pathParts = filePath.split('\\');
     const domain = pathParts[pathParts.length - 2];
     const filename = pathParts[pathParts.length - 1];
-    return `/api/saved-page/${domain}/${filename}`;
+    const url = `/api/saved-page/${domain}/${filename}`;
+    console.log('Generated URL:', url);
+    return url;
   };
 
-  const handleFileOpen = (website) => {
-    const url = getWebpageUrl(website.file_path);
-    // Get file extension from the file path
-    const fileExt = website.file_path.split('.').pop().toLowerCase();
-    
-    if (fileExt === 'pdf') {
-      // For PDFs, open in new tab
-      window.open(url, '_blank');
-    } else {
-      // For HTML, open in a new window with specific features
-      window.open(url, '_blank', 'width=1000,height=800,menubar=no,toolbar=no');
+  const handleFileOpen = async (website) => {
+    try {
+      const url = getWebpageUrl(website.file_path);
+      
+      // First, make a test request to check the response
+      console.log('Making test request to:', url);
+      const testResponse = await fetch(url);
+      console.log('Response received:', testResponse);
+      
+      const contentType = testResponse.headers.get('Content-Type');
+      const status = testResponse.status;
+      const statusText = testResponse.statusText;
+      
+      // Get the first few bytes of the response to see what we're getting
+      const buffer = await testResponse.clone().arrayBuffer();
+      const bytes = new Uint8Array(buffer.slice(0, 100));
+      const debugText = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join(' ');
+      
+      // Get text content for debugging
+      const textContent = await testResponse.clone().text();
+      const firstFewChars = textContent.substring(0, 200);
+      
+      const debugData = {
+        url,
+        status,
+        statusText,
+        contentType,
+        firstBytes: debugText,
+        firstChars: firstFewChars,
+        originalPath: website.file_path,
+        userAgent: navigator.userAgent,
+        timestamp: new Date().toISOString(),
+        headers: Object.fromEntries(testResponse.headers.entries()),
+        isHtml: contentType.includes('text/html'),
+        contentLength: testResponse.headers.get('Content-Length'),
+        browserInfo: {
+          userAgent: navigator.userAgent,
+          platform: navigator.platform,
+          vendor: navigator.vendor,
+          language: navigator.language,
+        }
+      };
+
+      console.log('Debug Data:', debugData);
+      setDebugInfo(debugData);
+
+      // Try to open in new window with error handling
+      const newWindow = window.open(url, '_blank');
+      if (newWindow === null) {
+        throw new Error('Popup blocked or failed to open');
+      }
+      
+      // Add event listener to check if window loads
+      newWindow.onload = () => {
+        console.log('Window loaded successfully');
+      };
+      
+      newWindow.onerror = (msg, url, lineNo, columnNo, error) => {
+        console.error('Error in new window:', { msg, url, lineNo, columnNo, error });
+        setDebugInfo(prev => ({
+          ...prev,
+          windowError: { msg, url, lineNo, columnNo }
+        }));
+      };
+
+    } catch (error) {
+      console.error('Error opening file:', error);
+      setDebugInfo(prev => ({
+        ...(prev || {}),
+        error: {
+          message: error.message,
+          stack: error.stack,
+          type: error.name
+        },
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent
+      }));
     }
   };
 
@@ -89,6 +158,15 @@ const LoadPage = () => {
           {error}
         </div>
       ) : null}
+
+      {debugInfo && (
+        <div className="mb-6 p-4 bg-gray-100 rounded-lg overflow-auto">
+          <h3 className="font-bold mb-2">Debug Info:</h3>
+          <pre className="text-xs whitespace-pre-wrap">
+            {JSON.stringify(debugInfo, null, 2)}
+          </pre>
+        </div>
+      )}
       
       <div className="mb-6">
         <div className="relative">
@@ -124,6 +202,9 @@ const LoadPage = () => {
                 </p>
                 <p className="text-xs text-gray-500">
                   Saved on: {new Date(website.created).toLocaleDateString()}
+                </p>
+                <p className="text-xs text-gray-400 mt-2">
+                  File: {website.file_path}
                 </p>
               </div>
             </div>
