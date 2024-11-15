@@ -3,111 +3,83 @@ const fs = require('fs');
 const path = require('path');
 
 function initializeDatabase(web_url, title, file_path) {
-    return new Promise((resolve, reject) => {
-        const filePath = path.join(__dirname, 'websites.db');
-        const db = new sqlite3.Database(filePath, (err) => {
-            if (err) {
-                return reject(`Error opening database: ${err.message}`);
-            }
-            console.log("Database opened successfully.");
-        });
-
-        // Create tables and insert initial data
-        db.serialize(() => {
-            db.run(`CREATE TABLE IF NOT EXISTS websites (
-                web_url TEXT PRIMARY KEY,
-                title TEXT,
-                file_path TEXT NOT NULL,
-                created DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`, (err) => {
-                if (err) {
-                    db.close();
-                    return reject(`Error creating table: ${err.message}`);
-                }
-
-                // Insert initial data
-                const query = `INSERT INTO websites (web_url, title, file_path) VALUES (?, ?, ?)`;
-                db.run(query, [web_url, title, file_path], (err) => {
-                    if (err) {
-                        db.close();
-                        return reject(`Error inserting data: ${err.message}`);
-                    }
-                    console.log("Initial data inserted.");
-
-                    // Close the database after resolving
-                    db.close((closeErr) => {
-                        if (closeErr) {
-                            return reject(`Error closing database: ${closeErr.message}`);
-                        }
-                        console.log("Database closed successfully.");
-                        resolve("Database initialized and data inserted.");
-                    });
-                });
-            });
-        });
-    });
-}
-
-//Need to update server.js so that it uses await  
-async function insertWebsite(web_url, title, file_path) {
     const filePath = path.join(__dirname, 'websites.db');
-    try {
-        if (!fs.existsSync(filePath)) {
-            // Await for initializeDatabase to finish
-            await initializeDatabase(web_url, title, file_path);
-            return "Database created.";
-        } else {
-            console.log("Database already exists:", filePath);
-            
-            const database = new sqlite3.Database(filePath, sqlite3.OPEN_READWRITE, (err) => {
-                if (err) {
-                    throw new Error(`Error opening database: ${err.message}`);
-                }
-            });
+    // Create a new database (or open if it exists)
+    const db = new sqlite3.Database(filePath, (err) => {
+      if (err) {
+        console.error("Error opening database:", err.message);
+        return;
+      }
+      console.log("Database opened successfully.");
+    });
+  
+    // Create tables and insert initial data
+    db.serialize(() => {
+      // Example table: websites
+      db.run(`CREATE TABLE IF NOT EXISTS websites (
+        web_url TEXT PRIMARY KEY,
+        title TEXT,
+        file_path TEXT NOT NULL,
+        created DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`);
+  
+      // Insert initial data
+    const query = `INSERT INTO websites (web_url, title, file_path) VALUES (?, ?, ?)`;
+    db.run(query, [web_url, title, file_path], (err) => {
+    if (err) {
+        console.error("Error inserting data:", err.message);
+    } else {
+        console.log("Initial data inserted.");
+    }
+    });
 
-            // Check if the website already exists in the database
-            const checkQuery = fs.readFileSync(path.join(__dirname, 'SQL', 'check_duplicates.sql'), 'utf-8');
-            const row = await new Promise((resolve, reject) => {
-                database.get(checkQuery, [web_url], (err, row) => {
-                    if (err) {
-                        reject(`Error checking for duplicate: ${err.message}`);
-                    } else {
-                        resolve(row);
-                    }
+    });
+  
+    // Close the database connection
+    db.close((err) => {
+      if (err) {
+        console.error("Error closing database:", err.message);
+      } else {
+        console.log("Database closed successfully.");
+      }
+    });
+  }
+  
+function insertWebsite(web_url, title, file_path) {
+    // this file isnt saved to github, this function builds the database after fresh clone
+    const filePath = path.join(__dirname, 'websites.db');
+    if (!fs.existsSync(filePath)) {
+        // File doesn't exist, so create it with initial content
+        initializeDatabase(web_url, title, file_path);
+        console.log("Data Base created:", filePath);
+    } else {
+        console.log("Data Base already exists:", filePath);
+        const database = new sqlite3.Database(path.join(__dirname, 'websites.db'), sqlite3.OPEN_READWRITE, (err) => {
+            if(err) {return console.error(err.message);}
+        });
+        //Checks if the website already exists in the database
+        let query = fs.readFileSync(path.join(__dirname, 'SQL', 'check_duplicates.sql'), 'utf-8');
+        database.get(query, [web_url], (err, row) => {
+            if(err) {return console.error(err);}
+            //If website already exists, overwrite with updated data
+            if(row) {
+                query = fs.readFileSync(path.join(__dirname, 'SQL', 'overwrite_duplicate.sql'), 'utf-8');
+                database.run(query, [title, file_path, web_url], (err) => {
+                    if(err) return console.error(err.message);
                 });
-            });
-
-            if (row) {
-                const updateQuery = fs.readFileSync(path.join(__dirname, 'SQL', 'overwrite_duplicate.sql'), 'utf-8');
-                await new Promise((resolve, reject) => {
-                    database.run(updateQuery, [title, file_path, web_url], (err) => {
-                        if (err) {
-                            reject(`Error updating website: ${err.message}`);
-                        } else {
-                            resolve();
-                        }
-                    });
-                });
-                database.close();
-                return `Website data for ${title} has been updated.`;
+                //Confirmation for testing
+                console.log(`Website data for ${title} has been updated in the database.`);
             } else {
-                const insertQuery = fs.readFileSync(path.join(__dirname, 'SQL', 'insert_website.sql'), 'utf-8');
-                await new Promise((resolve, reject) => {
-                    database.run(insertQuery, [web_url, title, file_path], (err) => {
-                        if (err) {
-                            reject(`Error inserting website: ${err.message}`);
-                        } else {
-                            resolve();
-                        }
-                    });
+                //Otherwise, runs SQL query to insert website into database table
+                query = fs.readFileSync(path.join(__dirname, 'SQL', 'insert_website.sql'), 'utf-8');
+                database.run(query, [web_url, title, file_path], (err) => {
+                    if(err) return console.error(err.message);
                 });
-                database.close();
-                return `${title} has been added to the database.`;
+                //Confirmation for testing
+                console.log(`${title} has been added to the database.`);
             }
-        }
-    } catch (err) {
-        console.error("Error:", err);
-        throw err;
+        });
+        database.close();
     }
 }
 
