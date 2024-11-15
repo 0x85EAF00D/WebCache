@@ -51,6 +51,29 @@ function decryptUserData(encryptedData, iv) {
   }
 }
 
+function findFileInDirectory(directoryPath) {
+  try {
+    // Read the directory contents
+    const files = fs.readdirSync(directoryPath);
+
+    // Look for .html or .pdf files
+    const htmlFile = files.find((file) => file.endsWith(".html"));
+    const pdfFile = files.find((file) => file.endsWith(".pdf"));
+
+    // Return the first matching file found, preferring HTML over PDF
+    if (htmlFile) {
+      return path.join(directoryPath, htmlFile);
+    } else if (pdfFile) {
+      return path.join(directoryPath, pdfFile);
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Error reading directory:", error);
+    return null;
+  }
+}
+
 function extractUrl(filename) {
   try {
     const content = fs.readFileSync(filename, "utf-8");
@@ -184,6 +207,58 @@ app.use(express.static(path.join(__dirname, "build")));
 
 // API Routes should come BEFORE the catch-all route
 //this is the load page endpoint
+app.get("/api/saved-page", (req, res) => {
+  const filePath = req.query.path;
+
+  if (!filePath) {
+    console.log("No file path provided");
+    return res.status(400).json({ error: "File path is required" });
+  }
+
+  // Normalize the file path for the operating system
+  const normalizedPath = path.normalize(filePath);
+  console.log("Checking path:", normalizedPath);
+
+  try {
+    // Check if the path is a directory
+    const stats = fs.statSync(normalizedPath);
+
+    let actualFilePath;
+    if (stats.isDirectory()) {
+      console.log("Path is a directory, searching for files...");
+      actualFilePath = findFileInDirectory(normalizedPath);
+      if (!actualFilePath) {
+        return res
+          .status(404)
+          .json({ error: "No HTML or PDF file found in directory" });
+      }
+    } else {
+      actualFilePath = normalizedPath;
+    }
+
+    console.log("Attempting to serve file from:", actualFilePath);
+
+    // Read the file content
+    const content = fs.readFileSync(actualFilePath, "utf8");
+
+    // Set appropriate headers based on file type
+    const isHtml = actualFilePath.endsWith(".html");
+    res.setHeader("Content-Type", isHtml ? "text/html" : "application/pdf");
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("Cache-Control", "no-cache");
+
+    return res.send(content);
+  } catch (error) {
+    console.error("Error serving file:", error);
+    return res.status(500).json({
+      error: "Error serving file",
+      details: error.message,
+      path: normalizedPath,
+    });
+  }
+});
+
+// Update the get-links endpoint to include file detection
 app.get("/api/get-links", async (req, res) => {
   console.log("Load page endpoint was hit.");
 
@@ -191,16 +266,28 @@ app.get("/api/get-links", async (req, res) => {
     const websites = await getWebsites();
     console.log("Raw websites data:", websites);
 
-    // Transform the data to include proper file paths
+    // Transform the data to include actual file paths
     const websitesWithPaths = websites.map((website) => {
-      // Log the current file path being processed
-      console.log("Processing file path:", website.file_path);
+      const normalizedPath = path.normalize(website.file_path);
+      let actualFilePath = null;
+
+      try {
+        const stats = fs.statSync(normalizedPath);
+        if (stats.isDirectory()) {
+          actualFilePath = findFileInDirectory(normalizedPath);
+        } else {
+          actualFilePath = normalizedPath;
+        }
+      } catch (error) {
+        console.warn(`Error checking path ${normalizedPath}:`, error);
+      }
 
       return {
         web_url: website.web_url,
         title: website.title,
-        file_path: website.file_path,
+        file_path: actualFilePath || normalizedPath,
         created: website.created,
+        exists: !!actualFilePath,
       };
     });
 
@@ -208,7 +295,10 @@ app.get("/api/get-links", async (req, res) => {
     res.json(websitesWithPaths);
   } catch (error) {
     console.error("Error fetching websites:", error);
-    res.status(500).json({ error: "Failed to fetch websites" });
+    res.status(500).json({
+      error: "Failed to fetch websites",
+      details: error.message,
+    });
   }
 });
 
@@ -241,33 +331,6 @@ app.get("/api/saved-page/:domain/:file", (req, res) => {
       "X-Content-Type-Options": "nosniff",
     },
   });
-});
-
-// Serve saved HTML files using query parameter for full path
-app.get("/api/saved-page", (req, res) => {
-  const filePath = req.query.path;
-
-  if (!filePath) {
-    return res.status(400).send("File path is required");
-  }
-
-  console.log("Attempting to serve file from:", filePath);
-
-  // Check if file exists
-  if (!fs.existsSync(filePath)) {
-    console.log("File not found:", filePath);
-    return res.status(404).send("File not found");
-  }
-
-  // Read file contents and send them directly
-  try {
-    const content = fs.readFileSync(filePath, "utf8");
-    res.setHeader("Content-Type", "text/html");
-    res.send(content);
-  } catch (error) {
-    console.error("Error reading file:", error);
-    res.status(500).send("Error reading file");
-  }
 });
 
 // Serve the index.html for all routes (for React Router or other SPA)
