@@ -64,6 +64,15 @@ function extractAfterLastSlash(url) {
     return url.split('/').pop();
 }
 
+function removeAfterLastSlash(url) {
+    if (typeof url !== 'string') {
+        console.error("Error: Invalid URL. Expected a string but got:", url);
+        return null; // or an appropriate default value
+    }
+    const lastSlashIndex = url.lastIndexOf('/');
+    return lastSlashIndex !== -1 ? url.substring(0, lastSlashIndex) : url;
+}
+
 function moveFile(sourcePath, url, destinationPath) {
     // Ensure the destination directory exists
     const destinationDir = path.dirname(destinationPath); // Get the directory from the destination path
@@ -201,7 +210,7 @@ app.post('/api/save-link', async (req, res) => {
 
   console.log(`Link received: ${link}`);
 
-    //httrack $(link) -r0 -O /OutputLocation
+   //httrack $(link) -r0 -O /OutputLocation
     // httrack is a url html file downloader
     // -r2 means recusive depth of 0 or just the current page plus one link away for the most infomation on the current page
     // -%eN0 means to set the external links depth to 0
@@ -231,7 +240,7 @@ app.post('/api/save-link', async (req, res) => {
         console.log(`@@$$@@ From Website: ${WEBsite}`);
         const destinationFilePath = path.join('../database', 'Websites', WEBsite, DownloadedHTMLfile); // Destination path for the database
 
-        moveFile(path.join('WebsiteTempDatabase', Nohttps), Nohttps, destinationFilePath); // Move the wanted file
+        moveFile(path.join('WebsiteTempDatabase', Nohttps), destinationFilePath); // Move the wanted file
         await delay(2000);
         cleanUpDatabase('DownloadedHTML'); // Clean up everything except DownloadedHTML folder
         await delay(2000);     
@@ -261,25 +270,93 @@ app.post('/api/save-link', async (req, res) => {
             return res.status(200).json({ message: 'Link failed' }); // Link extraction failed
         } else {
 
-            //const destinationFilePath = path.join(__dirname, 'WebsiteTempDatabase', 'DownloadedHTML', DownloadedHTMLfile); // Destination path for the file
+            // code block detects for existing file names in storage directories 
             const destinationFilePath = path.join('../database', 'Websites', WEBsite, DownloadedHTMLfile); // Destination path for the database
 
             try {
-                
-                moveFile(path.join('WebsiteTempDatabase', url), url, destinationFilePath); // Move the wanted file
-                await delay(2000);
-                cleanUpDatabase('DownloadedHTML'); // Clean up everything except DownloadedHTML folder
-                await delay(2000);
-                // Add file data to database
-                const fullPath = path.resolve(destinationFilePath);
-                console.log(`Fullpath: ${fullPath}`);
-                let title = readHtmlTitle(destinationFilePath);
-                console.log(`Page Title: ${title}`); // Read the HTML title
-                insertWebsite(url, title, fullPath);
-                
+
 
                 
-                return res.status(200).json({ message: `Link saved: ${link}` }); // Success response
+                // check if file exist before over writing it 
+                // domain and index.html
+                const [fileName, fileExt] = DownloadedHTMLfile.split('.'); // "index" and "html"
+                let fileCounter = 1;
+                let whileLoopEnter = 0;
+                let filePath = path.join('../database', 'Websites', WEBsite, DownloadedHTMLfile); // Destination path for the database
+               
+                console.error(`!!!!!!!!!!!!file2URL: ${filePath}`);
+                console.error('File exists:', fs.existsSync(filePath)); // Should print true
+                let newFileName = `${fileName}${fileCounter}.${fileExt}`;
+                while (fs.existsSync(filePath)) {
+                    // Separate the base name and the extension
+                    newFileName = `${fileName}${fileCounter}.${fileExt}`;
+                    console.log(`HTML Wanted File name exists: Changing name to ${newFileName} and trying again`);
+                    filePath = path.join('../database', 'Websites', WEBsite, newFileName); // Destination path for the database
+                
+                    whileLoopEnter++;
+                    fileCounter++;
+                }
+                if(whileLoopEnter>0)
+                { // file needs to be renamed with correct file name
+                    try {
+                       let pathtofile = removeAfterLastSlash(url);
+                        filePath = path.join('WebsiteTempDatabase', pathtofile, newFileName); // Destination path for the database
+                        URLfile = path.join('WebsiteTempDatabase', pathtofile, DownloadedHTMLfile); // Destination path for the database
+                        //    fs.renameSync(oldPath, newPath);
+                        console.log(`filepath ${filePath} `);
+                        console.log(`URlfile ${URLfile} `);
+                        fs.renameSync(URLfile, filePath);
+                        console.log('File renamed successfully');
+                    } catch (err) {
+                        console.error(`Error renaming file: ${err}`);
+                    }
+                    
+                    filePath = path.join( removeAfterLastSlash(url), newFileName); // Destination path for the database
+                    console.log(`movefile path ${filePath} `);
+                    let moveDomainLocation = path.join('../database', 'Websites', WEBsite, newFileName); // Destination path for the database
+
+                    // if from same web_url dont create newe index name rather use old index name
+
+
+
+
+
+
+
+
+
+
+                    // else use this code below
+                    moveFile(path.join('WebsiteTempDatabase', filePath), moveDomainLocation); // Move the wanted file
+                    await delay(2000);
+                    cleanUpDatabase('DownloadedHTML'); // Clean up everything except DownloadedHTML folder
+                    await delay(2000);
+                    // Add file data to database
+                    console.log(`Fullpath: ${moveDomainLocation}`);
+                    const fullPath = path.resolve(moveDomainLocation);
+                    console.log(`Fullpath: ${fullPath}`);
+                    let title = readHtmlTitle(moveDomainLocation);
+                    console.log(`Page Title: ${title}`); // Read the HTML title
+                    insertWebsite(removeAfterLastSlash(url), title, fullPath);
+                    return res.status(200).json({ message: `Link saved: ${link}` }); // Success response
+                }
+                else
+                {
+                    moveFile(path.join('WebsiteTempDatabase', url), destinationFilePath); // Move the wanted file
+                    await delay(2000);
+                    cleanUpDatabase('DownloadedHTML'); // Clean up everything except DownloadedHTML folder
+                    await delay(2000);
+                    // Add file data to database
+                    const fullPath = path.resolve(destinationFilePath);
+                    console.log(`Fullpath: ${fullPath}`);
+                    let title = readHtmlTitle(destinationFilePath);
+                    console.log(`Page Title: ${title}`); // Read the HTML title
+                    insertWebsite(removeAfterLastSlash(url), title, fullPath);
+                    return res.status(200).json({ message: `Link saved: ${link}` }); // Success response
+                }
+
+
+                
         
             } catch (error) {
                 console.error(`Error processing file operations from: ${link}`, error.message);
