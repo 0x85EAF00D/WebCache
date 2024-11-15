@@ -222,24 +222,54 @@ app.get('/api/saved-page/:domain/:file', (req, res) => {
     });
 });
 
-// Serve saved HTML files
+// Serve saved files (HTML or PDF)
 app.get('/api/saved-page/:domain/:filename', (req, res) => {
     const { domain, filename } = req.params;
-    // Append index.html to the path
-    const filePath = path.join(__dirname, '..', 'database', 'Websites', domain, filename, 'index.html');
+    const dirPath = path.join(__dirname, '..', 'database', 'Websites', domain, filename);
     
-    console.log('Attempting to serve file from:', filePath);
+    console.log('Looking for files in:', dirPath);
     
-    // Check if file exists
-    if (!fs.existsSync(filePath)) {
-        console.log('File not found:', filePath);
-        return res.status(404).send('File not found');
-    }
-    
-    // Send the file with appropriate headers
-    res.sendFile(filePath, {
-        headers: {
-            'Content-Type': 'text/html',
+    // Read the directory
+    fs.readdir(dirPath, (err, files) => {
+        if (err) {
+            console.error('Error reading directory:', err);
+            return res.status(404).send('Directory not found');
+        }
+
+        if (files.length === 0) {
+            console.error('No files found in directory');
+            return res.status(404).send('No files found');
+        }
+
+        const filePath = path.join(dirPath, files[0]);
+        console.log('Serving file:', filePath);
+
+        const ext = path.extname(filePath).toLowerCase();
+        
+        if (ext === '.pdf') {
+            // For PDFs, we can still serve directly
+            res.sendFile(filePath, {
+                headers: {
+                    'Content-Type': 'application/pdf'
+                }
+            });
+        } else {
+            // For HTML, read the file and serve it with security headers
+            fs.readFile(filePath, 'utf8', (err, data) => {
+                if (err) {
+                    console.error('Error reading file:', err);
+                    return res.status(500).send('Error reading file');
+                }
+                
+                res.set({
+                    'Content-Type': 'text/html',
+                    'X-Content-Type-Options': 'nosniff',
+                    'Content-Security-Policy': "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: *",
+                    'X-Frame-Options': 'SAMEORIGIN'
+                });
+                
+                res.send(data);
+            });
         }
     });
 });

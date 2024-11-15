@@ -47,11 +47,24 @@ const LoadPage = () => {
   };
 
   const getWebpageUrl = (filePath) => {
-    // Extract domain and filename from the full path
     const pathParts = filePath.split('\\');
-    const domain = pathParts[pathParts.length - 2];  // Second to last element
-    const filename = pathParts[pathParts.length - 1]; // Last element
+    const domain = pathParts[pathParts.length - 2];
+    const filename = pathParts[pathParts.length - 1];
     return `/api/saved-page/${domain}/${filename}`;
+  };
+
+  const handleFileOpen = (website) => {
+    const url = getWebpageUrl(website.file_path);
+    // Get file extension from the file path
+    const fileExt = website.file_path.split('.').pop().toLowerCase();
+    
+    if (fileExt === 'pdf') {
+      // For PDFs, open in new tab
+      window.open(url, '_blank');
+    } else {
+      // For HTML, open in a new window with specific features
+      window.open(url, '_blank', 'width=1000,height=800,menubar=no,toolbar=no');
+    }
   };
 
   if (isLoading) {
@@ -97,13 +110,12 @@ const LoadPage = () => {
           </p>
         ) : (
           filteredWebsites.map((website, index) => (
-            <div key={index} className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow duration-200">
-              <a 
-                href={getWebpageUrl(website.file_path)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block"
-              >
+            <div 
+              key={index} 
+              className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow duration-200 cursor-pointer"
+              onClick={() => handleFileOpen(website)}
+            >
+              <div className="block">
                 <h3 className="text-lg font-medium text-blue-600 hover:text-blue-800 mb-1">
                   {website.title || 'Untitled'}
                 </h3>
@@ -113,7 +125,7 @@ const LoadPage = () => {
                 <p className="text-xs text-gray-500">
                   Saved on: {new Date(website.created).toLocaleDateString()}
                 </p>
-              </a>
+              </div>
             </div>
           ))
         )}

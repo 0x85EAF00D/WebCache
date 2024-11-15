@@ -1,0 +1,5 @@
+Mirror in progress since Thu, 14 Nov 2024 18:33:08 .. please wait!
+httrack https://preppykitchen.com/ 
+To pause the engine: create an empty file named 'hts-stop.lock'
+PID=6044
+START=1731637988
