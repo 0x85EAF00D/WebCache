@@ -119,67 +119,98 @@ function moveFile(sourcePath, url, destinationPath) {
 
   try {
     // Normalize paths for cross-platform compatibility
-    // This converts forward slashes to backslashes on Windows and vice versa
     sourcePath = path.normalize(sourcePath);
     destinationPath = path.normalize(destinationPath);
 
-    // Log the normalized paths for debugging
     console.log("Normalized source path:", sourcePath);
     console.log("Normalized destination path:", destinationPath);
 
     // Create all necessary directories in the source path
     const sourceDir = path.dirname(sourcePath);
     if (!fs.existsSync(sourceDir)) {
-      fs.mkdirSync(sourceDir, { recursive: true, mode: 0o755 }); // Add mode for Unix permissions
+      fs.mkdirSync(sourceDir, { recursive: true });
       console.log(`Created source directory: ${sourceDir}`);
     }
 
     // Create all necessary directories in the destination path
     const destinationDir = path.dirname(destinationPath);
     if (!fs.existsSync(destinationDir)) {
-      fs.mkdirSync(destinationDir, { recursive: true, mode: 0o755 }); // Add mode for Unix permissions
+      fs.mkdirSync(destinationDir, { recursive: true });
       console.log(`Created destination directory: ${destinationDir}`);
     }
 
-    // Check if source file exists
+    // Check if source exists
     if (!fs.existsSync(sourcePath)) {
-      throw new Error(`Source file does not exist: ${sourcePath}`);
+      throw new Error(`Source does not exist: ${sourcePath}`);
     }
 
-    // Check if destination file already exists
+    // Check if source is a directory
+    const sourceStats = fs.statSync(sourcePath);
+    const isDirectory = sourceStats.isDirectory();
+
+    // If destination exists, try to remove it with retries
     if (fs.existsSync(destinationPath)) {
       console.log(
-        `Destination file already exists, removing: ${destinationPath}`
+        `Attempting to remove existing destination: ${destinationPath}`
       );
-      fs.unlinkSync(destinationPath);
-    }
 
-    // Try to move the file using rename
-    try {
-      fs.renameSync(sourcePath, destinationPath);
-      console.log(`File moved successfully to ${destinationPath}`);
-    } catch (renameError) {
-      // If rename fails (e.g., across different devices), fall back to copy and delete
-      if (renameError.code === "EXDEV") {
-        console.log(
-          "Cross-device move detected, falling back to copy and delete"
-        );
-        fs.copyFileSync(sourcePath, destinationPath);
-        fs.unlinkSync(sourcePath);
-        console.log(
-          `File copied and deleted successfully to ${destinationPath}`
-        );
-      } else {
-        throw renameError;
+      // Try multiple times with delay
+      for (let i = 0; i < 3; i++) {
+        try {
+          if (isDirectory) {
+            fs.rmSync(destinationPath, { recursive: true, force: true });
+          } else {
+            fs.unlinkSync(destinationPath);
+          }
+          console.log("Successfully removed existing destination");
+          break;
+        } catch (error) {
+          if (i === 2) {
+            // Last attempt
+            throw new Error(
+              `Failed to remove existing destination after 3 attempts: ${error.message}`
+            );
+          }
+          // Wait for 1 second before next attempt
+          console.log(`Retry ${i + 1}: Waiting before next attempt...`);
+          require("child_process").execSync("timeout /t 1");
+        }
       }
     }
 
-    // Verify the move was successful
-    if (!fs.existsSync(destinationPath)) {
-      throw new Error("Move operation failed: destination file does not exist");
-    }
+    // Perform the move operation
+    try {
+      if (isDirectory) {
+        // For directories, use recursive copy then delete
+        fs.cpSync(sourcePath, destinationPath, { recursive: true });
+        fs.rmSync(sourcePath, { recursive: true, force: true });
+      } else {
+        // For files, try rename first, fall back to copy+delete
+        try {
+          fs.renameSync(sourcePath, destinationPath);
+        } catch (renameError) {
+          if (renameError.code === "EXDEV" || renameError.code === "EPERM") {
+            fs.copyFileSync(sourcePath, destinationPath);
+            fs.unlinkSync(sourcePath);
+          } else {
+            throw renameError;
+          }
+        }
+      }
 
-    return true;
+      console.log(
+        `Successfully moved ${
+          isDirectory ? "directory" : "file"
+        } to ${destinationPath}`
+      );
+      return true;
+    } catch (moveError) {
+      throw new Error(
+        `Failed to move ${isDirectory ? "directory" : "file"}: ${
+          moveError.message
+        }`
+      );
+    }
   } catch (err) {
     console.error("Error in moveFile:", err);
     console.error("Error details:", {
