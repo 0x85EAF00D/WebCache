@@ -11,3 +11,5 @@ note:	the hts-log.txt file, and hts-cache folder, may contain sensitive informat
 18:34:07	Error: 	"Forbidden" (403) at link https://preppykitchen.com/xmlrpc.php?rsd (from https://preppykitchen.com/)
 18:34:07	Error: 	"Not Found" (404) at link https://preppykitchen.com/slickstream-code (from https://preppykitchen.com/)
 18:34:07	Error: 	"Forbidden" (403) at link https://preppykitchen.com/xmlrpc.php (from https://preppykitchen.com/)
+18:39:58	Error: 	Exit requested by shell or user
+18:39:58	Warning: 	File not added due to mirror cancel: https://preppykitchen.com/press/GET
