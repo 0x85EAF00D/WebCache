@@ -8,6 +8,23 @@ const LoadPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [debugInfo, setDebugInfo] = useState(null);
+  const [isDarkMode, setIsDarkMode] = useState(
+    window.matchMedia("(prefers-color-scheme: dark)").matches
+  );
+
+  useEffect(() => {
+    // Listen for changes in color scheme preference
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = (e) => setIsDarkMode(e.matches);
+
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
+
+  useEffect(() => {
+    // Apply data-bs-theme attribute to body when dark mode changes
+    document.body.setAttribute("data-bs-theme", isDarkMode ? "dark" : "light");
+  }, [isDarkMode]);
 
   useEffect(() => {
     fetchWebsites();
@@ -48,35 +65,18 @@ const LoadPage = () => {
     setSearchQuery(event.target.value);
   };
 
-  const getWebpageUrl = (filePath) => {
-    const pathParts = filePath.split("\\");
-    const domain = pathParts[pathParts.length - 2];
-    const filename = pathParts[pathParts.length - 1];
-    const url = `/api/saved-page/${domain}/${filename}`;
-    console.log("Generated URL:", url);
-    return url;
-  };
-
   const handleFileOpen = async (website) => {
     try {
-      // Send the full file path as a query parameter instead
       const url = `/api/saved-page?path=${encodeURIComponent(
         website.file_path
       )}`;
-      console.log("Generated URL:", url);
+      console.log("Opening saved page:", url);
 
-      // First, make a test request to check the response
-      const testResponse = await fetch(url);
-      console.log("Response received:", testResponse);
-
-      if (!testResponse.ok) {
-        throw new Error(`Server responded with status: ${testResponse.status}`);
-      }
-
-      // Try to open in new window with error handling
       const newWindow = window.open(url, "_blank");
       if (newWindow === null) {
-        throw new Error("Popup blocked or failed to open");
+        throw new Error(
+          "Popup blocked or failed to open. Please allow popups for this site."
+        );
       }
     } catch (error) {
       console.error("Error opening file:", error);
@@ -86,8 +86,8 @@ const LoadPage = () => {
           stack: error.stack,
           type: error.name,
         },
-        timestamp: new Date().toISOString(),
         filePath: website.file_path,
+        timestamp: new Date().toISOString(),
         userAgent: navigator.userAgent,
       });
     }
@@ -95,79 +95,103 @@ const LoadPage = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto max-w-2xl p-4">
-        <div className="flex flex-col items-center justify-center space-y-2">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-          <p>Loading...</p>
+      <div className="container py-5">
+        <div className="d-flex flex-column align-items-center">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-2">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto max-w-2xl p-4">
-      <h1 className="text-3xl font-bold text-center mb-6">Saved Websites</h1>
+    <div className="container py-4">
+      <h1 className="text-center mb-4">Saved Websites</h1>
 
-      {error ? (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+      {error && (
+        <div className="alert alert-danger mb-4" role="alert">
           {error}
-        </div>
-      ) : null}
-
-      {debugInfo && (
-        <div className="mb-6 p-4 bg-gray-100 rounded-lg overflow-auto">
-          <h3 className="font-bold mb-2">Debug Info:</h3>
-          <pre className="text-xs whitespace-pre-wrap">
-            {JSON.stringify(debugInfo, null, 2)}
-          </pre>
         </div>
       )}
 
-      <div className="mb-6">
-        <div className="relative">
-          <Search
-            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-            size={20}
-          />
-          <input
-            type="text"
-            placeholder="Search websites..."
-            value={searchQuery}
-            onChange={handleSearchChange}
-            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
+      {debugInfo && (
+        <div className="card mb-4 border-0">
+          <div className="card-body">
+            <h5 className="card-title">Debug Info:</h5>
+            <pre className="small overflow-auto">
+              {JSON.stringify(debugInfo, null, 2)}
+            </pre>
+          </div>
+        </div>
+      )}
+
+      <div className="row justify-content-center mb-4">
+        <div className="col-12 col-md-8">
+          <div className="input-group">
+            <span className="input-group-text border-end-0 bg-body">
+              <Search size={20} />
+            </span>
+            <input
+              type="text"
+              className="form-control border-start-0"
+              placeholder="Search websites..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+            />
+          </div>
         </div>
       </div>
 
-      <div className="space-y-4">
-        {filteredWebsites.length === 0 ? (
-          <p className="text-center text-gray-500">
-            {websites.length === 0
-              ? "No websites saved yet"
-              : "No matching websites found"}
-          </p>
-        ) : (
-          filteredWebsites.map((website, index) => (
-            <div
-              key={index}
-              className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow duration-200 cursor-pointer"
-              onClick={() => handleFileOpen(website)}
-            >
-              <div className="block">
-                <h3 className="text-lg font-medium text-blue-600 hover:text-blue-800 mb-1">
-                  {website.title || "Untitled"}
-                </h3>
-                <p className="text-sm text-gray-600 mb-2">{website.web_url}</p>
-                <p className="text-xs text-gray-500">
-                  Saved on: {new Date(website.created).toLocaleDateString()}
-                </p>
-                <p className="text-xs text-gray-400 mt-2">
-                  File: {website.file_path}
-                </p>
-              </div>
+      <div className="row justify-content-center">
+        <div className="col-12 col-md-10">
+          {filteredWebsites.length === 0 ? (
+            <div className="text-center text-muted">
+              <p>
+                {websites.length === 0
+                  ? "No websites saved yet"
+                  : "No matching websites found"}
+              </p>
             </div>
-          ))
-        )}
+          ) : (
+            <div className="list-group">
+              {filteredWebsites.map((website, index) => (
+                <div
+                  key={index}
+                  className="list-group-item list-group-item-action p-3"
+                  onClick={() => handleFileOpen(website)}
+                  style={{ cursor: "pointer" }}
+                >
+                  <div className="d-flex flex-column">
+                    <h5 className="mb-1 text-primary">
+                      {website.title || "Untitled"}
+                    </h5>
+                    <p className="mb-1 text-break small">{website.web_url}</p>
+                    <div className="d-flex justify-content-between align-items-center mt-2">
+                      <small className="text-body-secondary">
+                        Saved on:{" "}
+                        {new Date(website.created).toLocaleDateString()}
+                      </small>
+                      <span
+                        className={`badge ${
+                          website.exists
+                            ? "bg-success-subtle text-success"
+                            : "bg-danger-subtle text-danger"
+                        }`}
+                      >
+                        {website.exists ? "Available" : "Missing"}
+                      </span>
+                    </div>
+                    <small className="text-body-secondary mt-1 text-break">
+                      File: {website.file_path}
+                    </small>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
