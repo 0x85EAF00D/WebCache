@@ -84,26 +84,30 @@ function insertWebsite(web_url, title, file_path) {
 }
 
 function deleteWebsite(web_url, title) {
-    const database = new sqlite3.Database(path.join(__dirname, 'websites.db'), sqlite3.OPEN_READWRITE, (err) => {
-        if(err) {return console.error(err.message);}
+    return new Promise((resolve, reject) => {
+        const database = new sqlite3.Database(path.join(__dirname, 'websites.db'), sqlite3.OPEN_READWRITE, (err) => {
+            if(err) {reject(err);}
+        });
+    
+        //Runs SQL query to delete website from database table
+        let query = fs.readFileSync(path.join(__dirname, 'SQL', 'delete_website.sql'), 'utf-8');
+        database.run(query, [web_url], (err) => {
+            if(err) {
+                reject(err);
+            }
+        });
+    
+        //Confirmation for testing
+        resolve(`${title} has been deleted from the database.`);
+        database.close();
     });
-
-    //Runs SQL query to delete website from database table
-    let query = fs.readFileSync(path.join(__dirname, 'SQL', 'delete_website.sql'), 'utf-8');
-    database.run(query, [web_url], (err) => {
-        if(err) return console.error(err.message);
-    });
-
-    //Confirmation for testing
-    console.log(`${title} has been deleted from the database.`);
-    database.close();
 }
 
 //Returns table of saved websites in an array of objects
 function getWebsites() {
     return new Promise((resolve, reject) => {
         const database = new sqlite3.Database(path.join(__dirname, 'websites.db'), sqlite3.OPEN_READWRITE, (err) => {
-            if(err) {return console.error(err.message);}
+            if(err) {reject(err);}
         });
         let query = `SELECT * FROM websites;`;
         database.all(query, [], (err, rows) => {
@@ -116,11 +120,6 @@ function getWebsites() {
         });
     });
 }
-
-// async function getWebsites() {
-//     let websites = await queryAll();
-//     return websites;
-// }
 
 //Export the functions to server.js
 module.exports = { insertWebsite, deleteWebsite, getWebsites };
