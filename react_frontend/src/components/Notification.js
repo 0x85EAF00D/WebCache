@@ -1,21 +1,31 @@
-/* This code will display a notification after each URL is processed that will automatically disappear
-within 3 seconds */
-
-import React, { useEffect } from 'react';
-import styles from './Notification.module.css';
+import React, { useEffect } from "react";
 
 const Notification = ({ message, type, onClose }) => {
   useEffect(() => {
-    // Set the notification on a timer to disappear after 3s
     const timer = setTimeout(() => {
       onClose();
-    }, 3000); 
+    }, 3000);
 
     return () => clearTimeout(timer);
   }, [onClose]);
 
+  const getNotificationClass = () => {
+    switch (type) {
+      case "error":
+        return "alert-danger";
+      case "success":
+        return "alert-success";
+      default:
+        return "alert-info";
+    }
+  };
+
   return (
-    <div className={`${styles.notification} ${type === 'error' ? styles.error : styles.success}`}>
+    <div
+      className={`alert ${getNotificationClass()} position-fixed top-0 end-0 m-3`}
+      style={{ zIndex: 1050, maxWidth: "300px", opacity: 0.95 }}
+      role="alert"
+    >
       {message}
     </div>
   );
