@@ -240,7 +240,7 @@ app.post('/api/save-link', async (req, res) => {
         console.log(`Fullpath: ${fullPath}`);
         const title = removeLastFourChars(DownloadedHTMLfile);
         console.log(`Page Title: ${title}`); // Read the title
-        insertWebsite(Nohttps, title, fullPath);
+        await insertWebsite(Nohttps, title, fullPath);
         return res.status(200).json({ message: `Link saved: ${link}` }); // Success response
         
         } catch (error) {
@@ -275,7 +275,7 @@ app.post('/api/save-link', async (req, res) => {
                 console.log(`Fullpath: ${fullPath}`);
                 let title = readHtmlTitle(destinationFilePath);
                 console.log(`Page Title: ${title}`); // Read the HTML title
-                insertWebsite(url, title, fullPath);
+                await insertWebsite(url, title, fullPath);
                 
 
                 
