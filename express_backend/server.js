@@ -64,6 +64,15 @@ function extractAfterLastSlash(url) {
     return url.split('/').pop();
 }
 
+function removeAfterLastSlash(url) {
+    if (typeof url !== 'string') {
+        console.error("Error: Invalid URL. Expected a string but got:", url);
+        return null; // or an appropriate default value
+    }
+    const lastSlashIndex = url.lastIndexOf('/');
+    return lastSlashIndex !== -1 ? url.substring(0, lastSlashIndex) : url;
+}
+
 function moveFile(sourcePath, url, destinationPath) {
     // Ensure the destination directory exists
     const destinationDir = path.dirname(destinationPath); // Get the directory from the destination path
@@ -152,8 +161,6 @@ app.use(cors());
 
 // Middleware for parsing JSON
 app.use(express.json());
-app.use('/saved-websites', express.static(path.join(__dirname, '../database/Websites')));
-
 
 // Serve static files from the 'build' folder
 app.use(express.static(path.join(__dirname, 'build')));
@@ -167,13 +174,23 @@ app.get('/api/get-links', async (req, res) => {
 
     try {
         const websites = await getWebsites();
-        console.log('Fetched websites:', websites);
+        console.log('Raw websites data:', websites);
 
-        if (!websites) {
-            return res.json([]);
-        }
+        // Transform the data to include proper file paths
+        const websitesWithPaths = websites.map(website => {
+            // Log the current file path being processed
+            console.log('Processing file path:', website.file_path);
+            
+            return {
+                web_url: website.web_url,
+                title: website.title,
+                file_path: website.file_path,
+                created: website.created
+            };
+        });
 
-        res.json(websites);
+        console.log('Sending to frontend:', websitesWithPaths);
+        res.json(websitesWithPaths);
     } catch (error) {
         console.error('Error fetching websites:', error);
         res.status(500).json({ error: 'Failed to fetch websites' });
@@ -181,7 +198,51 @@ app.get('/api/get-links', async (req, res) => {
 });
 
 
+// The new saved-page endpoint
+app.get('/api/saved-page/:domain/:file', (req, res) => {
+    const { domain, file } = req.params;
+    
+    // Start from server.js location and navigate up then to correct folders
+    const filePath = path.join(__dirname, '..', 'database', 'Websites', domain, file);
+    
+    console.log('Attempting to serve file from:', filePath);
+    
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+        console.log('File not found:', filePath);
+        return res.status(404).send('File not found');
+    }
+    
+    // Send the file with appropriate headers
+    res.sendFile(filePath, {
+        headers: {
+            'Content-Type': 'text/html',
+            'X-Content-Type-Options': 'nosniff'
+        }
+    });
+});
 
+// Serve saved HTML files
+app.get('/api/saved-page/:domain/:filename', (req, res) => {
+    const { domain, filename } = req.params;
+    // Append index.html to the path
+    const filePath = path.join(__dirname, '..', 'database', 'Websites', domain, filename, 'index.html');
+    
+    console.log('Attempting to serve file from:', filePath);
+    
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+        console.log('File not found:', filePath);
+        return res.status(404).send('File not found');
+    }
+    
+    // Send the file with appropriate headers
+    res.sendFile(filePath, {
+        headers: {
+            'Content-Type': 'text/html',
+        }
+    });
+});
 
 
 
@@ -201,7 +262,7 @@ app.post('/api/save-link', async (req, res) => {
 
   console.log(`Link received: ${link}`);
 
-    //httrack $(link) -r0 -O /OutputLocation
+   //httrack $(link) -r0 -O /OutputLocation
     // httrack is a url html file downloader
     // -r2 means recusive depth of 0 or just the current page plus one link away for the most infomation on the current page
     // -%eN0 means to set the external links depth to 0
@@ -231,7 +292,7 @@ app.post('/api/save-link', async (req, res) => {
         console.log(`@@$$@@ From Website: ${WEBsite}`);
         const destinationFilePath = path.join('../database', 'Websites', WEBsite, DownloadedHTMLfile); // Destination path for the database
 
-        moveFile(path.join('WebsiteTempDatabase', Nohttps), Nohttps, destinationFilePath); // Move the wanted file
+        moveFile(path.join('WebsiteTempDatabase', Nohttps), destinationFilePath); // Move the wanted file
         await delay(2000);
         cleanUpDatabase('DownloadedHTML'); // Clean up everything except DownloadedHTML folder
         await delay(2000);     
@@ -261,7 +322,7 @@ app.post('/api/save-link', async (req, res) => {
             return res.status(200).json({ message: 'Link failed' }); // Link extraction failed
         } else {
 
-            //const destinationFilePath = path.join(__dirname, 'WebsiteTempDatabase', 'DownloadedHTML', DownloadedHTMLfile); // Destination path for the file
+            // code block detects for existing file names in storage directories 
             const destinationFilePath = path.join('../database', 'Websites', WEBsite, DownloadedHTMLfile); // Destination path for the database
 
             try {
@@ -279,7 +340,6 @@ app.post('/api/save-link', async (req, res) => {
                 
 
                 
-                return res.status(200).json({ message: `Link saved: ${link}` }); // Success response
         
             } catch (error) {
                 console.error(`Error processing file operations from: ${link}`, error.message);
