@@ -1,6 +1,3 @@
-
-
-
 import React, { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 
@@ -17,67 +14,40 @@ const LoadPage = () => {
 
   useEffect(() => {
     const filtered = websites.filter(website => 
-      website.link?.toLowerCase().includes(searchQuery.toLowerCase())
+      website.web_url?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      website.title?.toLowerCase().includes(searchQuery.toLowerCase())
     );
     setFilteredWebsites(filtered);
   }, [searchQuery, websites]);
 
-  const parseHtmlToWebsites = (htmlString) => {
-    console.log('Parsing HTML:', htmlString);
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(htmlString, 'text/html');
-    
-    // First try to find our custom container
-    const container = doc.querySelector('.websites-container');
-    if (!container) {
-      console.log('No websites container found');
-      return [];
-    }
-
-    // Check for no-websites message
-    const noWebsites = container.querySelector('.no-websites');
-    if (noWebsites) {
-      console.log('No websites message found');
-      return [];
-    }
-
-    const websiteElements = container.querySelectorAll('.website-item');
-    console.log('Found website elements:', websiteElements.length);
-    
-    return Array.from(websiteElements).map(element => {
-      const website = {
-        link: element.querySelector('.website-link')?.getAttribute('href') || '',
-        title: element.querySelector('.website-title')?.textContent || '',
-        savedAt: element.querySelector('.website-date')?.textContent || ''
-      };
-      console.log('Parsed website:', website);
-      return website;
-    });
-  };
-
   const fetchWebsites = async () => {
     try {
       console.log('Fetching websites...');
-      const response = await fetch('http://localhost:3000/api/get-links', {
-        headers: {
-          'Accept': 'text/html',
-        }
-      });
-      
-      console.log('Response status:', response.status);
+      const response = await fetch('http://localhost:3000/api/get-links');
       
       if (!response.ok) {
         throw new Error(`Failed to load websites: ${response.status}`);
       }
 
-      const htmlText = await response.text();
-      console.log('Received HTML:', htmlText);
-      
-      const websites = parseHtmlToWebsites(htmlText);
-      console.log('Parsed websites:', websites);
-      
-      setWebsites(websites);
-      setFilteredWebsites(websites);
+      const data = await response.json();
+      console.log('Received data:', data);
+
+      // Transform the data to include the local server URL for the HTML files
+      const transformedData = data.map(website => {
+        const fileName = website.file_path.split('\\').pop(); // Get the file name from the path
+        const folderName = website.web_url.split('/')[0]; // Get the folder name (domain)
+        const localUrl = `/saved-websites/${folderName}/${fileName}`; // Create the local URL
+        
+        return {
+          link: website.web_url,
+          title: website.title,
+          savedAt: new Date(website.created).toLocaleDateString(),
+          localUrl: localUrl // Add the local URL for serving the HTML file
+        };
+      });
+
+      setWebsites(transformedData);
+      setFilteredWebsites(transformedData);
     } catch (error) {
       console.error("Error during fetch:", error);
       setError(error.message);
@@ -133,18 +103,23 @@ const LoadPage = () => {
           </p>
         ) : (
           filteredWebsites.map((website, index) => (
-            <div key={index} className="bg-white rounded-lg shadow-md p-4">
-              <a
-                href={website.link}
+            <div key={index} className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow duration-200">
+              <a 
+                href={website.localUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800 hover:underline block mb-2"
+                className="block"
               >
-                {website.title || website.link}
+                <h3 className="text-lg font-medium text-blue-600 hover:text-blue-800 mb-1">
+                  {website.title}
+                </h3>
+                <p className="text-sm text-gray-600 mb-2">
+                  {website.link}
+                </p>
+                <p className="text-xs text-gray-500">
+                  Saved on: {website.savedAt}
+                </p>
               </a>
-              <p className="text-sm text-gray-500">
-                {website.savedAt}
-              </p>
             </div>
           ))
         )}

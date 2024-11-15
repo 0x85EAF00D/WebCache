@@ -152,6 +152,8 @@ app.use(cors());
 
 // Middleware for parsing JSON
 app.use(express.json());
+app.use('/saved-websites', express.static(path.join(__dirname, '../database/Websites')));
+
 
 // Serve static files from the 'build' folder
 app.use(express.static(path.join(__dirname, 'build')));
@@ -165,34 +167,16 @@ app.get('/api/get-links', async (req, res) => {
 
     try {
         const websites = await getWebsites();
-        console.log('Fetched websites:', websites); // Debug log
+        console.log('Fetched websites:', websites);
 
-        // Check if websites is undefined or null
         if (!websites) {
-            console.log('No websites found in database');
-            return res.send(`
-                <div class="websites-container">
-                    <div class="no-websites">No websites found</div>
-                </div>
-            `);
+            return res.json([]);
         }
 
-        // Convert the data to HTML format
-        const html = `
-            <div class="websites-container">
-                ${Array.isArray(websites) ? websites.map(website => `
-                    <div class="website-item">
-                        <a class="website-link" href="${website?.link || '#'}">${website?.link || 'No Link'}</a>
-                        <div class="website-title">${website?.title || 'No Title'}</div>
-                        <div class="website-date">${website?.savedAt ? new Date(website.savedAt).toLocaleDateString() : 'No Date'}</div>
-                    </div>
-                `).join('') : '<div class="error">Invalid data format</div>'}
-            </div>
-        `;
-        res.send(html);
+        res.json(websites);
     } catch (error) {
         console.error('Error fetching websites:', error);
-        res.status(500).send('<div class="error">Failed to fetch websites</div>');
+        res.status(500).json({ error: 'Failed to fetch websites' });
     }
 });
 
