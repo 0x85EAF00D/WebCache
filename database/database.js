@@ -80,6 +80,7 @@ function insertWebsite(web_url, title, file_path) {
             }
         });
         database.close();
+        console.log('Database has been closed.');
     }
 }
 
@@ -87,17 +88,35 @@ function updateWebsite() {
     //Will update website fields based on the input values
 }
 
-function getFilePath() {
-    //1: Query web_url
-    //2: If web_url is found, return the file_path
-    //3: Else return "Not found"
+function getFilePath(web_url) {
+    return new Promise((resolve, reject) => {
+        const database = new sqlite3.Database(path.join(__dirname, 'websites.db'), sqlite3.OPEN_READWRITE, (err) => {
+            if(err) {reject(err);}
+        });
+        //Runs SQL query to to find all instances of a given web_url
+        let query = fs.readFileSync(path.join(__dirname, 'SQL', 'get_web_URL.sql'), 'utf-8');
+        database.get(query, [web_url], (err, row) => {
+            if(err) {
+                reject(err);
+            } else if(row) {
+                //Get the file path value
+                resolve(row.file_path);
+            } else {
+                //File does not exist
+                resolve(false);
+            }
+        });
+    });
 }
 
 
 function deleteWebsite(web_url, title) {
     return new Promise((resolve, reject) => {
         const database = new sqlite3.Database(path.join(__dirname, 'websites.db'), sqlite3.OPEN_READWRITE, (err) => {
-            if(err) {reject(err);}
+            if(err) {
+                reject(err);
+                database.close();
+            }
         });
     
         //Runs SQL query to delete website from database table
@@ -105,6 +124,7 @@ function deleteWebsite(web_url, title) {
         database.run(query, [web_url], (err) => {
             if(err) {
                 reject(err);
+                database.close();
             }
         });
     
@@ -133,4 +153,4 @@ function getWebsites() {
 }
 
 //Export the functions to server.js
-module.exports = { insertWebsite, deleteWebsite, getWebsites };
+module.exports = { insertWebsite, deleteWebsite, getWebsites, getFilePath };
