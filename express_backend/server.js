@@ -236,7 +236,6 @@ app.get('/api/saved-page/:domain/:filename', (req, res) => {
             return res.status(404).send('Directory not found');
         }
 
-        // Should only be one file
         if (files.length === 0) {
             console.error('No files found in directory');
             return res.status(404).send('No files found');
@@ -245,16 +244,33 @@ app.get('/api/saved-page/:domain/:filename', (req, res) => {
         const filePath = path.join(dirPath, files[0]);
         console.log('Serving file:', filePath);
 
-        // Determine content type based on file extension
         const ext = path.extname(filePath).toLowerCase();
-        const contentType = ext === '.pdf' ? 'application/pdf' : 'text/html';
-
-        // Send the file with appropriate headers
-        res.sendFile(filePath, {
-            headers: {
-                'Content-Type': contentType
-            }
-        });
+        
+        if (ext === '.pdf') {
+            // For PDFs, we can still serve directly
+            res.sendFile(filePath, {
+                headers: {
+                    'Content-Type': 'application/pdf'
+                }
+            });
+        } else {
+            // For HTML, read the file and serve it with security headers
+            fs.readFile(filePath, 'utf8', (err, data) => {
+                if (err) {
+                    console.error('Error reading file:', err);
+                    return res.status(500).send('Error reading file');
+                }
+                
+                res.set({
+                    'Content-Type': 'text/html',
+                    'X-Content-Type-Options': 'nosniff',
+                    'Content-Security-Policy': "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: *",
+                    'X-Frame-Options': 'SAMEORIGIN'
+                });
+                
+                res.send(data);
+            });
+        }
     });
 });
 
