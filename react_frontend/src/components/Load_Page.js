@@ -31,23 +31,9 @@ const LoadPage = () => {
 
       const data = await response.json();
       console.log('Received data:', data);
-
-      // Transform the data to include the local server URL for the HTML files
-      const transformedData = data.map(website => {
-        const fileName = website.file_path.split('\\').pop(); // Get the file name from the path
-        const folderName = website.web_url.split('/')[0]; // Get the folder name (domain)
-        const localUrl = `/saved-websites/${folderName}/${fileName}`; // Create the local URL
-        
-        return {
-          link: website.web_url,
-          title: website.title,
-          savedAt: new Date(website.created).toLocaleDateString(),
-          localUrl: localUrl // Add the local URL for serving the HTML file
-        };
-      });
-
-      setWebsites(transformedData);
-      setFilteredWebsites(transformedData);
+      
+      setWebsites(data);
+      setFilteredWebsites(data);
     } catch (error) {
       console.error("Error during fetch:", error);
       setError(error.message);
@@ -58,6 +44,14 @@ const LoadPage = () => {
 
   const handleSearchChange = (event) => {
     setSearchQuery(event.target.value);
+  };
+
+  const getWebpageUrl = (filePath) => {
+    // Extract domain and filename from the full path
+    const pathParts = filePath.split('\\');
+    const domain = pathParts[pathParts.length - 2];  // Second to last element
+    const filename = pathParts[pathParts.length - 1]; // Last element
+    return `/api/saved-page/${domain}/${filename}`;
   };
 
   if (isLoading) {
@@ -105,19 +99,19 @@ const LoadPage = () => {
           filteredWebsites.map((website, index) => (
             <div key={index} className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow duration-200">
               <a 
-                href={website.localUrl}
+                href={getWebpageUrl(website.file_path)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block"
               >
                 <h3 className="text-lg font-medium text-blue-600 hover:text-blue-800 mb-1">
-                  {website.title}
+                  {website.title || 'Untitled'}
                 </h3>
                 <p className="text-sm text-gray-600 mb-2">
-                  {website.link}
+                  {website.web_url}
                 </p>
                 <p className="text-xs text-gray-500">
-                  Saved on: {website.savedAt}
+                  Saved on: {new Date(website.created).toLocaleDateString()}
                 </p>
               </a>
             </div>

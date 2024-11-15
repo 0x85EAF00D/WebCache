@@ -161,8 +161,6 @@ app.use(cors());
 
 // Middleware for parsing JSON
 app.use(express.json());
-app.use('/saved-websites', express.static(path.join(__dirname, '../database/Websites')));
-
 
 // Serve static files from the 'build' folder
 app.use(express.static(path.join(__dirname, 'build')));
@@ -176,13 +174,23 @@ app.get('/api/get-links', async (req, res) => {
 
     try {
         const websites = await getWebsites();
-        console.log('Fetched websites:', websites);
+        console.log('Raw websites data:', websites);
 
-        if (!websites) {
-            return res.json([]);
-        }
+        // Transform the data to include proper file paths
+        const websitesWithPaths = websites.map(website => {
+            // Log the current file path being processed
+            console.log('Processing file path:', website.file_path);
+            
+            return {
+                web_url: website.web_url,
+                title: website.title,
+                file_path: website.file_path,
+                created: website.created
+            };
+        });
 
-        res.json(websites);
+        console.log('Sending to frontend:', websitesWithPaths);
+        res.json(websitesWithPaths);
     } catch (error) {
         console.error('Error fetching websites:', error);
         res.status(500).json({ error: 'Failed to fetch websites' });
@@ -190,7 +198,51 @@ app.get('/api/get-links', async (req, res) => {
 });
 
 
+// The new saved-page endpoint
+app.get('/api/saved-page/:domain/:file', (req, res) => {
+    const { domain, file } = req.params;
+    
+    // Start from server.js location and navigate up then to correct folders
+    const filePath = path.join(__dirname, '..', 'database', 'Websites', domain, file);
+    
+    console.log('Attempting to serve file from:', filePath);
+    
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+        console.log('File not found:', filePath);
+        return res.status(404).send('File not found');
+    }
+    
+    // Send the file with appropriate headers
+    res.sendFile(filePath, {
+        headers: {
+            'Content-Type': 'text/html',
+            'X-Content-Type-Options': 'nosniff'
+        }
+    });
+});
 
+// Serve saved HTML files
+app.get('/api/saved-page/:domain/:filename', (req, res) => {
+    const { domain, filename } = req.params;
+    // Append index.html to the path
+    const filePath = path.join(__dirname, '..', 'database', 'Websites', domain, filename, 'index.html');
+    
+    console.log('Attempting to serve file from:', filePath);
+    
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+        console.log('File not found:', filePath);
+        return res.status(404).send('File not found');
+    }
+    
+    // Send the file with appropriate headers
+    res.sendFile(filePath, {
+        headers: {
+            'Content-Type': 'text/html',
+        }
+    });
+});
 
 
 
