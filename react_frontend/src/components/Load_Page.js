@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { Search } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { Search } from "lucide-react";
 
 const LoadPage = () => {
   const [websites, setWebsites] = useState([]);
   const [filteredWebsites, setFilteredWebsites] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [debugInfo, setDebugInfo] = useState(null);
@@ -14,25 +14,26 @@ const LoadPage = () => {
   }, []);
 
   useEffect(() => {
-    const filtered = websites.filter(website => 
-      website.web_url?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      website.title?.toLowerCase().includes(searchQuery.toLowerCase())
+    const filtered = websites.filter(
+      (website) =>
+        website.web_url?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        website.title?.toLowerCase().includes(searchQuery.toLowerCase())
     );
     setFilteredWebsites(filtered);
   }, [searchQuery, websites]);
 
   const fetchWebsites = async () => {
     try {
-      console.log('Fetching websites...');
-      const response = await fetch('http://localhost:3000/api/get-links');
-      
+      console.log("Fetching websites...");
+      const response = await fetch("http://localhost:3000/api/get-links");
+
       if (!response.ok) {
         throw new Error(`Failed to load websites: ${response.status}`);
       }
 
       const data = await response.json();
-      console.log('Received data:', data);
-      
+      console.log("Received data:", data);
+
       setWebsites(data);
       setFilteredWebsites(data);
     } catch (error) {
@@ -48,91 +49,47 @@ const LoadPage = () => {
   };
 
   const getWebpageUrl = (filePath) => {
-    const pathParts = filePath.split('\\');
+    const pathParts = filePath.split("\\");
     const domain = pathParts[pathParts.length - 2];
     const filename = pathParts[pathParts.length - 1];
     const url = `/api/saved-page/${domain}/${filename}`;
-    console.log('Generated URL:', url);
+    console.log("Generated URL:", url);
     return url;
   };
 
   const handleFileOpen = async (website) => {
     try {
-      const url = getWebpageUrl(website.file_path);
-      
-      // First, make a test request to check the response
-      console.log('Making test request to:', url);
-      const testResponse = await fetch(url);
-      console.log('Response received:', testResponse);
-      
-      const contentType = testResponse.headers.get('Content-Type');
-      const status = testResponse.status;
-      const statusText = testResponse.statusText;
-      
-      // Get the first few bytes of the response to see what we're getting
-      const buffer = await testResponse.clone().arrayBuffer();
-      const bytes = new Uint8Array(buffer.slice(0, 100));
-      const debugText = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join(' ');
-      
-      // Get text content for debugging
-      const textContent = await testResponse.clone().text();
-      const firstFewChars = textContent.substring(0, 200);
-      
-      const debugData = {
-        url,
-        status,
-        statusText,
-        contentType,
-        firstBytes: debugText,
-        firstChars: firstFewChars,
-        originalPath: website.file_path,
-        userAgent: navigator.userAgent,
-        timestamp: new Date().toISOString(),
-        headers: Object.fromEntries(testResponse.headers.entries()),
-        isHtml: contentType.includes('text/html'),
-        contentLength: testResponse.headers.get('Content-Length'),
-        browserInfo: {
-          userAgent: navigator.userAgent,
-          platform: navigator.platform,
-          vendor: navigator.vendor,
-          language: navigator.language,
-        }
-      };
+      // Send the full file path as a query parameter instead
+      const url = `/api/saved-page?path=${encodeURIComponent(
+        website.file_path
+      )}`;
+      console.log("Generated URL:", url);
 
-      console.log('Debug Data:', debugData);
-      setDebugInfo(debugData);
+      // First, make a test request to check the response
+      const testResponse = await fetch(url);
+      console.log("Response received:", testResponse);
+
+      if (!testResponse.ok) {
+        throw new Error(`Server responded with status: ${testResponse.status}`);
+      }
 
       // Try to open in new window with error handling
-      const newWindow = window.open(url, '_blank');
+      const newWindow = window.open(url, "_blank");
       if (newWindow === null) {
-        throw new Error('Popup blocked or failed to open');
+        throw new Error("Popup blocked or failed to open");
       }
-      
-      // Add event listener to check if window loads
-      newWindow.onload = () => {
-        console.log('Window loaded successfully');
-      };
-      
-      newWindow.onerror = (msg, url, lineNo, columnNo, error) => {
-        console.error('Error in new window:', { msg, url, lineNo, columnNo, error });
-        setDebugInfo(prev => ({
-          ...prev,
-          windowError: { msg, url, lineNo, columnNo }
-        }));
-      };
-
     } catch (error) {
-      console.error('Error opening file:', error);
-      setDebugInfo(prev => ({
-        ...(prev || {}),
+      console.error("Error opening file:", error);
+      setDebugInfo({
         error: {
           message: error.message,
           stack: error.stack,
-          type: error.name
+          type: error.name,
         },
         timestamp: new Date().toISOString(),
-        userAgent: navigator.userAgent
-      }));
+        filePath: website.file_path,
+        userAgent: navigator.userAgent,
+      });
     }
   };
 
@@ -149,10 +106,8 @@ const LoadPage = () => {
 
   return (
     <div className="container mx-auto max-w-2xl p-4">
-      <h1 className="text-3xl font-bold text-center mb-6">
-        Saved Websites
-      </h1>
-      
+      <h1 className="text-3xl font-bold text-center mb-6">Saved Websites</h1>
+
       {error ? (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
           {error}
@@ -167,10 +122,13 @@ const LoadPage = () => {
           </pre>
         </div>
       )}
-      
+
       <div className="mb-6">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+          <Search
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+            size={20}
+          />
           <input
             type="text"
             placeholder="Search websites..."
@@ -180,26 +138,26 @@ const LoadPage = () => {
           />
         </div>
       </div>
-      
+
       <div className="space-y-4">
         {filteredWebsites.length === 0 ? (
           <p className="text-center text-gray-500">
-            {websites.length === 0 ? 'No websites saved yet' : 'No matching websites found'}
+            {websites.length === 0
+              ? "No websites saved yet"
+              : "No matching websites found"}
           </p>
         ) : (
           filteredWebsites.map((website, index) => (
-            <div 
-              key={index} 
+            <div
+              key={index}
               className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow duration-200 cursor-pointer"
               onClick={() => handleFileOpen(website)}
             >
               <div className="block">
                 <h3 className="text-lg font-medium text-blue-600 hover:text-blue-800 mb-1">
-                  {website.title || 'Untitled'}
+                  {website.title || "Untitled"}
                 </h3>
-                <p className="text-sm text-gray-600 mb-2">
-                  {website.web_url}
-                </p>
+                <p className="text-sm text-gray-600 mb-2">{website.web_url}</p>
                 <p className="text-xs text-gray-500">
                   Saved on: {new Date(website.created).toLocaleDateString()}
                 </p>
