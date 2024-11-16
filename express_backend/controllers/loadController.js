@@ -1,4 +1,4 @@
-const Website = require("../models/website");
+const Website = require("../models/Website");
 const FileService = require("../services/fileService");
 const path = require("path");
 const fs = require("fs-extra");

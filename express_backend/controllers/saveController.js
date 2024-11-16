@@ -1,9 +1,11 @@
+const fs = require('fs');
 const { exec } = require("child_process");
 const path = require("path");
 const Website = require("../models/Website");
 const FileService = require("../services/fileService");
 const UrlUtils = require("../utils/urlUtils");
 const HttrackService = require("../services/httrackService");
+const Database = require("../../database/database.js");
 const { delay } = require("../utils/timeUtils");
 
 class SaveController {
@@ -38,11 +40,15 @@ class SaveController {
 
       await FileService.moveFile(paths.tempPath, paths.destinationPath);
       await delay(2000);
-      await FileService.cleanUpDatabase("DownloadedHTML");
+      await FileService.cleanUpDatabase("../DownloadedHTML");
 
       const fullPath = path.resolve(paths.destinationPath);
       const title = UrlUtils.removeLastFourChars(urlInfo.filename);
-
+      if (!fs.existsSync(path.join(__dirname, '../database/websites.db'))) {
+        // database doesn't exist, so create it with initial content
+        initializeDatabase(web_url, title, file_path);
+        console.log("Data Base created:", filePath);
+    } 
       await Website.create(urlInfo.url, title, fullPath);
       return res.status(200).json({ message: `Link saved: ${link}` });
     } catch (error) {
@@ -58,10 +64,16 @@ class SaveController {
 
       await FileService.moveFile(paths.sourcePath, paths.destinationPath);
       await delay(2000);
-      await FileService.cleanUpDatabase("DownloadedHTML");
+      await FileService.cleanUpDatabase("../DownloadedHTML");
 
       const fullPath = path.resolve(paths.destinationPath);
       const title = await FileService.readHtmlTitle(paths.destinationPath);
+
+    if (!fs.existsSync(path.join(__dirname, '../database/websites.db'))) {
+        // database doesn't exist, so create it with initial content
+        initializeDatabase(web_url, title, file_path);
+        console.log("Data Base created:", filePath);
+    } 
 
       await Website.create(url, title, fullPath);
       return res.status(200).json({ message: `Link saved: ${link}` });

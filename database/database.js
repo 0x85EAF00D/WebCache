@@ -153,4 +153,4 @@ function getWebsites() {
 }
 
 //Export the functions to server.js
-module.exports = { insertWebsite, deleteWebsite, getWebsites, getFilePath };
+module.exports = { insertWebsite, deleteWebsite, getWebsites, getFilePath, initializeDatabase };

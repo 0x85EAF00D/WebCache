@@ -20,7 +20,7 @@ class HttrackService {
         });
       });
 
-      console.log("Httrack output:", stdout);
+      console.log(`Httrack output:\n`, stdout);
 
       if (stderr && stderr.length > 0) {
         console.warn("Httrack stderr:", stderr);
