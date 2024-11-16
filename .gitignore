@@ -2,9 +2,10 @@
 # modules
 express_backend/node_modules
 express_backend/DownloadedHTML
+express_backend/database/*.db
 express_backend/WebsiteTempDatabase
 database/node_modules
-database/*.db
+
 database/Websites
 *.DS_Store
 node_modules/

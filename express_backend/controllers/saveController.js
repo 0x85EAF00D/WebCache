@@ -46,7 +46,7 @@ class SaveController {
       const title = UrlUtils.removeLastFourChars(urlInfo.filename);
       if (!fs.existsSync(path.join(__dirname, '../database/websites.db'))) {
         // database doesn't exist, so create it with initial content
-        initializeDatabase(web_url, title, file_path);
+        Database.initializeDatabase(web_url, title, file_path);
         console.log("Data Base created:", filePath);
     } 
       await Website.create(urlInfo.url, title, fullPath);
@@ -71,7 +71,7 @@ class SaveController {
 
     if (!fs.existsSync(path.join(__dirname, '../database/websites.db'))) {
         // database doesn't exist, so create it with initial content
-        initializeDatabase(web_url, title, file_path);
+        Database.initializeDatabase(web_url, title, file_path);
         console.log("Data Base created:", filePath);
     } 
 
