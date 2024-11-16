@@ -2,6 +2,15 @@ const sqlite3 = require('sqlite3').verbose();
 const fs = require('fs');
 const path = require('path');
 
+function CheckIfDatabaseExists(web_url, title, file_path) {
+    if (!fs.existsSync(path.join(__dirname, '../express_backend/database/websites.db'))) {
+        // database doesn't exist, so create it with initial content
+        Database.initializeDatabase(web_url, title, file_path);
+        console.log("Data Base created:", filePath);
+    } 
+    
+}
+
 function initializeDatabase(web_url, title, file_path) {
     const filePath = path.join(__dirname, 'websites.db');
     // Create a new database (or open if it exists)
@@ -153,4 +162,4 @@ function getWebsites() {
 }
 
 //Export the functions to server.js
-module.exports = { insertWebsite, deleteWebsite, getWebsites, getFilePath, initializeDatabase };
+module.exports = { insertWebsite, deleteWebsite, getWebsites, getFilePath, CheckIfDatabaseExists };
