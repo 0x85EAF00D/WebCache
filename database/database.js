@@ -2,17 +2,17 @@ const sqlite3 = require('sqlite3').verbose();
 const fs = require('fs');
 const path = require('path');
 
-function CheckIfDatabaseExists(web_url, title, file_path) {
+function CheckIfDatabaseExists() {
     if (!fs.existsSync(path.join(__dirname, '../express_backend/database/websites.db'))) {
         // database doesn't exist, so create it with initial content
-        Database.initializeDatabase(web_url, title, file_path);
-        console.log("Data Base created:", filePath);
+        initializeDatabase();
+        console.log("Data Base created");
     } 
     
 }
 
-function initializeDatabase(web_url, title, file_path) {
-    const filePath = path.join(__dirname, 'websites.db');
+function initializeDatabase() {
+    const filePath = path.join(__dirname, '../express_backend/database/websites.db');
     // Create a new database (or open if it exists)
     const db = new sqlite3.Database(filePath, (err) => {
       if (err) {
@@ -31,16 +31,6 @@ function initializeDatabase(web_url, title, file_path) {
         file_path TEXT NOT NULL,
         created DATETIME DEFAULT CURRENT_TIMESTAMP
       )`);
-  
-      // Insert initial data
-    const query = `INSERT INTO websites (web_url, title, file_path) VALUES (?, ?, ?)`;
-    db.run(query, [web_url, title, file_path], (err) => {
-    if (err) {
-        console.error("Error inserting data:", err.message);
-    } else {
-        console.log("Initial data inserted.");
-    }
-    });
 
     });
   
@@ -56,14 +46,14 @@ function initializeDatabase(web_url, title, file_path) {
   
 function insertWebsite(web_url, title, file_path) {
     // this file isnt saved to github, this function builds the database after fresh clone
-    const filePath = path.join(__dirname, 'websites.db');
+    const filePath = path.join(__dirname, '../express_backend/database/websites.db');
     if (!fs.existsSync(filePath)) {
         // File doesn't exist, so create it with initial content
         initializeDatabase(web_url, title, file_path);
         console.log("Data Base created:", filePath);
     } else {
         console.log("Data Base already exists:", filePath);
-        const database = new sqlite3.Database(path.join(__dirname, 'websites.db'), sqlite3.OPEN_READWRITE, (err) => {
+        const database = new sqlite3.Database(path.join(__dirname, '../express_backend/database/websites.db'), sqlite3.OPEN_READWRITE, (err) => {
             if(err) {return console.error(err.message);}
         });
         //Checks if the website already exists in the database
@@ -98,25 +88,42 @@ function updateWebsite() {
 }
 
 function getFilePath(web_url) {
+
     return new Promise((resolve, reject) => {
-        const database = new sqlite3.Database(path.join(__dirname, 'websites.db'), sqlite3.OPEN_READWRITE, (err) => {
-            if(err) {reject(err);}
-        });
-        //Runs SQL query to to find all instances of a given web_url
-        let query = fs.readFileSync(path.join(__dirname, 'SQL', 'get_web_URL.sql'), 'utf-8');
-        database.get(query, [web_url], (err, row) => {
-            if(err) {
-                reject(err);
-            } else if(row) {
-                //Get the file path value
-                resolve(row.file_path);
-            } else {
-                //File does not exist
-                resolve(false);
-            }
-        });
+      const dbPath = path.join(__dirname, '../express_backend/database', 'websites.db');
+      const database = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE, (err) => {
+        if (err) {
+          reject(err);
+          return; // Prevent further execution
+        }
+      });
+  
+      // Ensure the database connection is closed after query execution
+      let query;
+      try {
+        query = fs.readFileSync(path.join(__dirname, 'SQL', 'get_web_URL.sql'), 'utf-8');
+      } catch (fileErr) {
+        database.close();
+        return reject(fileErr);
+      }
+  
+      // Execute the query
+      database.get(query, [web_url], (err, row) => {
+        if (err) {
+          database.close(); // Always close the database
+          return reject(err);
+        }
+        if (row) {
+          database.close();
+          resolve(row.file_path);
+        } else {
+          database.close();
+          resolve(false);
+        }
+      });
     });
-}
+  }
+  
 
 
 function deleteWebsite(web_url, title) {

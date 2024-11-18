@@ -58,6 +58,14 @@ class UrlUtils {
     return parts[parts.length - 1] || "";
   }
 
+  static removeAfterLastSlash(url) {
+    if (typeof url !== 'string') {
+        console.error("Error: Invalid URL. Expected a string but got:", url);
+        return null; // or an appropriate default value
+    }
+    const lastSlashIndex = url.lastIndexOf('/');
+    return lastSlashIndex !== -1 ? url.substring(0, lastSlashIndex) : url;
+}
   static removeFirstEightChars(str) {
     return str && str.length > 8 ? str.substring(8) : str;
   }

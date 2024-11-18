@@ -1,14 +1,17 @@
 const fs = require("fs-extra");
 const path = require("path");
+const Database = require("../../database/database.js");
+const UrlUtils = require("../utils/urlUtils");
+
 
 class FileService {
   static constructPaths(urlInfo) {
     const basePath = process.cwd();
     const tempDatabasePath = path.join(basePath, "WebsiteTempDatabase");
-    const downloadedPath = path.join(basePath, "DownloadedHTML");
-
+    const downloadedPath = path.join(basePath, "DownloadedHTML"); // might want to change this to databse folder
     // Create paths using path.join to ensure cross-platform compatibility
     const paths = {
+      downloadedPathOUT: path.join(basePath, "DownloadedHTML"),
       // Temp path where HTTrack initially downloads
       tempPath: path.join(tempDatabasePath, urlInfo.domain),
 
@@ -21,6 +24,7 @@ class FileService {
         urlInfo.domain,
         urlInfo.filename || "index.html"
       ),
+     
     };
 
     return paths;
@@ -53,6 +57,7 @@ class FileService {
       return null;
     }
   }
+
 
   static async moveFile(sourcePath, destinationPath) {
     try {
@@ -183,6 +188,37 @@ class FileService {
       return null;
     }
   }
-}
 
+
+static async check4dupesNames(url, domain, pathOBJ) {
+  const databaseQuery = await Database.getFilePath(url); //will be like index.html if in database
+  if(databaseQuery != false)// 
+  { //lals code goes here has to check if url exists and if it does renmae the new downlaoed file 
+    // to the desination path
+  }
+  else{
+     const fileExistingName =  UrlUtils.extractAfterLastSlash(url);
+     const [fileName, fileExt] = fileExistingName.split('.'); // "index" and "html"
+     const filePathWithoutFileName =  UrlUtils.removeAfterLastSlash(pathOBJ.destinationPath);
+     let fileCounter = 0;
+     let whileLoopEnter = 0;
+     let newFileName = `${fileName}.${fileExt}`;
+     let filePath = path.join(filePathWithoutFileName, newFileName); 
+     while (fs.existsSync(filePath)) {
+          // Separate the base name and the extension
+          fileCounter++;
+          newFileName = `${fileName}${fileCounter}.${fileExt}`;
+          //console.log(`HTML Wanted File name exists: Changing name to ${newFileName} and trying again`);
+          filePath = path.join(filePathWithoutFileName, newFileName); 
+          whileLoopEnter++;
+
+      }
+      if(whileLoopEnter>0)
+      { // file needs to be renamed with correct file name
+        pathOBJ.destinationPath= path.join(pathOBJ.downloadedPathOUT, domain, newFileName);
+        //console.log(`path destination output : ${ pathOBJ.destinationPath}\n`);
+      }
+    } 
+  }
+}
 module.exports = FileService;

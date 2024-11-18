@@ -2,11 +2,13 @@
 Some downloaded html files don't open correctly in chrome, but will open correct in safari and Firefox
 
 #2
-Front end needs to return saved database items to the user 
-    - Functionality exists in the database to return saved websites as a javascript object, but is not implemented in the front end yet
-
-#3
 On windows version the software the function extractUrl() seems to stop the program. A possible path find in function might be causing it, it works on linux 
 
-#4 
-Having trouble downloading two pages from the same website. They're saving under the same page title and it says the database already exists. i.e. https://preppykitchen.com/gingerbread-cupcakes/ and https://preppykitchen.com/waffle-recipe/. Only one HTML file is getting saved
+#3
+Make a Manual file entry for html and pdf in new top tab 
+
+#4
+ Delete file from data base and database folder
+
+
+

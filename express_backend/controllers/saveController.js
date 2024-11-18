@@ -4,7 +4,7 @@ const Website = require("../models/Website");
 const FileService = require("../services/fileService");
 const UrlUtils = require("../utils/urlUtils");
 const HttrackService = require("../services/httrackService");
-const Database = require("../../database/database.js");
+const Database = require("../../database/database");
 const { delay } = require("../utils/timeUtils");
 
 class SaveController {
@@ -37,6 +37,9 @@ class SaveController {
       const urlInfo = UrlUtils.parseDirectUrl(link);
       const paths = FileService.constructPaths(urlInfo);
 
+      await Database.CheckIfDatabaseExists();
+      await FileService.check4dupesNames(urlInfo.url, urlInfo.domain, paths);
+
       await FileService.moveFile(paths.tempPath, paths.destinationPath);
       await delay(2000);
       await FileService.cleanUpDatabase("../DownloadedHTML");
@@ -57,13 +60,15 @@ class SaveController {
       const urlInfo = UrlUtils.parseWebpageUrl(url);
       const paths = FileService.constructPaths(urlInfo);
 
+      await Database.CheckIfDatabaseExists();
+      await FileService.check4dupesNames(urlInfo.url, urlInfo.domain, paths);
+
       await FileService.moveFile(paths.sourcePath, paths.destinationPath);
       await delay(2000);
       await FileService.cleanUpDatabase("../DownloadedHTML");
 
       const fullPath = path.resolve(paths.destinationPath);
       const title = await FileService.readHtmlTitle(paths.destinationPath);
-      await Database.CheckIfDatabaseExists(url, title, fullPath);
       await Website.create(url, title, fullPath);
       return res.status(200).json({ message: `Link saved: ${link}` });
     } catch (error) {
@@ -72,5 +77,4 @@ class SaveController {
     }
   }
 }
-
 module.exports = SaveController;
