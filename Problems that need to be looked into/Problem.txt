@@ -2,7 +2,8 @@
 Some downloaded html files don't open correctly in chrome, but will open correct in safari and Firefox
 
 #2
-On windows version the software the function extractUrl() seems to stop the program. A possible path find in function might be causing it, it works on linux 
+On windows version the software the function check4dupesNames doesn't seem to work, it works on linux
+On windows the title is also not saved when loading the saved html files
 
 #3
 Make a Manual file entry for html and pdf in new top tab 
