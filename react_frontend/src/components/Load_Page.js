@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Search, Trash2 } from "lucide-react";
+import { Search, Trash2, Edit2 } from "lucide-react";
 
 const LoadPage = () => {
   const [websites, setWebsites] = useState([]);
@@ -15,6 +15,12 @@ const LoadPage = () => {
     show: false,
     websiteId: null,
     websiteTitle: "",
+  });
+  const [titleEdit, setTitleEdit] = useState({
+    show: false,
+    websiteId: null,
+    currentTitle: "",
+    newTitle: "",
   });
 
   useEffect(() => {
@@ -120,6 +126,63 @@ const LoadPage = () => {
     }
   };
 
+  const handleTitleEditClick = (websiteId, currentTitle) => {
+    setTitleEdit({
+      show: true,
+      websiteId,
+      currentTitle,
+      newTitle: currentTitle,
+    });
+  };
+
+  const handleTitleEditChange = (event) => {
+    setTitleEdit({
+      ...titleEdit,
+      newTitle: event.target.value,
+    });
+  };
+
+  const handleTitleEditSubmit = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:3000/api/website/${titleEdit.websiteId}/update-title`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title: titleEdit.newTitle,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to update title: ${response.status}`);
+      }
+
+      const updatedWebsite = await response.json();
+
+      // Update local state with response from server
+      const updatedWebsites = websites.map((website) =>
+        website.id === titleEdit.websiteId
+          ? { ...website, title: updatedWebsite.title }
+          : website
+      );
+
+      setWebsites(updatedWebsites);
+      setTitleEdit({
+        show: false,
+        websiteId: null,
+        currentTitle: "",
+        newTitle: "",
+      });
+    } catch (error) {
+      console.error("Error updating title:", error);
+      setError("Failed to update title. Please try again.");
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="container py-5">
@@ -189,24 +252,39 @@ const LoadPage = () => {
                   className="list-group-item list-group-item-action p-3"
                 >
                   <div className="d-flex justify-content-between align-items-start">
-                    <div
-                      className="flex-grow-1"
-                      onClick={() => handleFileOpen(website)}
-                      style={{ cursor: "pointer" }}
-                    >
-                      <h5 className="mb-1 text-primary">
-                        {website.title || "Untitled"}
-                      </h5>
-                      <p className="mb-1 text-break small">{website.web_url}</p>
-                      <div className="mt-2">
-                        <small className="text-body-secondary">
-                          Saved on:{" "}
-                          {new Date(website.created).toLocaleDateString()}
+                    <div className="flex-grow-1" style={{ cursor: "pointer" }}>
+                      <div className="d-flex align-items-center mb-1">
+                        <button
+                          className="btn btn-link btn-sm text-secondary p-0 me-2"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleTitleEditClick(website.id, website.title);
+                          }}
+                          aria-label="Edit title"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <h5
+                          className="mb-0 text-primary"
+                          onClick={() => handleFileOpen(website)}
+                        >
+                          {website.title || "Untitled"}
+                        </h5>
+                      </div>
+                      <div onClick={() => handleFileOpen(website)}>
+                        <p className="mb-1 text-break small">
+                          {website.web_url}
+                        </p>
+                        <div className="mt-2">
+                          <small className="text-body-secondary">
+                            Saved on:{" "}
+                            {new Date(website.created).toLocaleDateString()}
+                          </small>
+                        </div>
+                        <small className="text-body-secondary mt-1 text-break">
+                          File: {website.file_path}
                         </small>
                       </div>
-                      <small className="text-body-secondary mt-1 text-break">
-                        File: {website.file_path}
-                      </small>
                     </div>
                     <div className="d-flex align-items-start gap-2">
                       <span
@@ -235,6 +313,74 @@ const LoadPage = () => {
           )}
         </div>
       </div>
+
+      {/* Title Edit Modal */}
+      {titleEdit.show && (
+        <div
+          className="modal d-block"
+          tabIndex="-1"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Edit Title</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() =>
+                    setTitleEdit({
+                      show: false,
+                      websiteId: null,
+                      currentTitle: "",
+                      newTitle: "",
+                    })
+                  }
+                ></button>
+              </div>
+              <div className="modal-body">
+                <div className="mb-3">
+                  <label htmlFor="newTitle" className="form-label">
+                    Website Title
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    id="newTitle"
+                    value={titleEdit.newTitle}
+                    onChange={handleTitleEditChange}
+                    placeholder="Enter new title"
+                  />
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() =>
+                    setTitleEdit({
+                      show: false,
+                      websiteId: null,
+                      currentTitle: "",
+                      newTitle: "",
+                    })
+                  }
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleTitleEditSubmit}
+                  disabled={!titleEdit.newTitle.trim()}
+                >
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       {deleteConfirmation.show && (
