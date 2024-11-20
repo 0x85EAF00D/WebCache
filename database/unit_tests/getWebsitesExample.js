@@ -1,4 +1,4 @@
-const { insertWebsite, deleteWebsite, getWebsites, getFilePath } = require('./database.js'); // Import SQLite functions
+const { insertWebsite, deleteWebsite, getWebsites, getFilePath } = require('../database.js'); // Import SQLite functions
 
 async function displayWebsiteData(url) {
     let site = await getFilePath(url);

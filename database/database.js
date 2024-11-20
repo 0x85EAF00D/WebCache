@@ -79,6 +79,9 @@ function insertWebsite(web_url, title, file_path) {
 }
 
 function updateWebsite(web_url, title, file_path) {
+  const database = new sqlite3.Database(path.join(__dirname, '../express_backend/database/websites.db'), sqlite3.OPEN_READWRITE, (err) => {
+    if(err) {return console.error(err.message);}
+    });
     //Will update website fields based on the input values
     query = fs.readFileSync(path.join(__dirname, 'SQL', 'update_website.sql'), 'utf-8');
     database.run(query, [title, file_path, web_url], (err) => {
@@ -129,7 +132,7 @@ function getFilePath(web_url) {
 
 function deleteWebsite(web_url, title) {
     return new Promise((resolve, reject) => {
-        const database = new sqlite3.Database(path.join(__dirname, 'websites.db'), sqlite3.OPEN_READWRITE, (err) => {
+        const database = new sqlite3.Database(path.join(__dirname, '../express_backend/database', 'websites.db'), sqlite3.OPEN_READWRITE, (err) => {
             if(err) {
                 reject(err);
                 database.close();
@@ -154,7 +157,7 @@ function deleteWebsite(web_url, title) {
 //Returns table of saved websites in an array of objects
 function getWebsites() {
     return new Promise((resolve, reject) => {
-        const database = new sqlite3.Database(path.join(__dirname, 'websites.db'), sqlite3.OPEN_READWRITE, (err) => {
+        const database = new sqlite3.Database(path.join(__dirname, '../express_backend/database', 'websites.db'), sqlite3.OPEN_READWRITE, (err) => {
             if(err) {reject(err);}
         });
         let query = `SELECT * FROM websites;`;
