@@ -9,3 +9,4 @@ database/node_modules
 database/Websites
 *.DS_Store
 node_modules/
+*.db
