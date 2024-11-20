@@ -1,6 +1,0 @@
-front end components can be found in: 
-    react_frontend/web-bank-frontend/src/components
-        Home.js
-        Load_Page.js
-        Save_Page.js
-        
