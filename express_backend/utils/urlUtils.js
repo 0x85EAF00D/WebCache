@@ -1,4 +1,4 @@
-const fs = require("fs");
+const fs = require("fs-extra");
 const path = require("path");
 
 class UrlUtils {
@@ -7,12 +7,12 @@ class UrlUtils {
       throw new Error("Link is required");
     }
 
-    const urlWithoutProtocol = UrlUtils.removeFirstEightChars(link);
+    const parts = link.split("/").filter(Boolean);
     return {
-      url: urlWithoutProtocol,
-      domain: UrlUtils.removeAfterFirstSlash(urlWithoutProtocol),
-      filename: UrlUtils.extractAfterLastSlash(urlWithoutProtocol),
-      relativePath: urlWithoutProtocol,
+      url: link,
+      domain: parts[0],
+      filename: parts[parts.length - 1] || "index.html",
+      relativePath: link,
     };
   }
 
@@ -21,99 +21,96 @@ class UrlUtils {
       throw new Error("URL is required");
     }
 
+    const parts = url.split("/").filter(Boolean);
     return {
-      url,
-      domain: UrlUtils.removeAfterFirstSlash(url),
-      filename: UrlUtils.extractAfterLastSlash(url),
+      url: url,
+      domain: parts[0],
+      filename: parts[parts.length - 1] || "index.html",
       relativePath: url,
     };
   }
 
-  static extractUrl(filename) {
+  static async findMainFile(baseDir, originalUrl) {
     try {
-      if (!filename) {
-        throw new Error("Filename is required");
+      console.log("Finding main file for:", originalUrl);
+
+      if (!originalUrl) {
+        throw new Error("Original URL is undefined");
       }
 
-      // Normalize the path for cross-platform compatibility
-      const normalizedPath = path.normalize(filename);
+      const parts = originalUrl.split("/").filter(Boolean);
+      const domain = parts[0];
+      const pathParts = parts.slice(1);
 
-      // Check if file exists
-      if (!fs.existsSync(normalizedPath)) {
-        console.error(`File not found: ${normalizedPath}`);
-        return null;
-      }
-
-      const content = fs.readFileSync(normalizedPath, "utf-8");
-
-      // Try multiple patterns to find URLs
-      const patterns = [
-        // Meta refresh URL
-        /<meta[^>]*?http-equiv=["']?refresh["']?[^>]*?content=["']?\d*;\s*url=(.*?)["']/i,
-        // Meta redirect URL
-        /<meta[^>]*?http-equiv=["']?refresh["']?[^>]*?content=["']?\d*;\s*URL=(.*?)["']/i,
-        // Base href
-        /<base[^>]*?href=["'](.*?)["']/i,
-        // Regular link
-        /<link[^>]*?href=["'](.*?)["']/i,
-        // Anchor tag
-        /<a[^>]*?href=["'](.*?)["']/i
+      // Build possible paths
+      const possiblePaths = [
+        // Full path including article path
+        path.join(baseDir, domain, ...pathParts, "index.html"),
+        // Domain root
+        path.join(baseDir, domain, "index.html"),
+        // Base directory
+        path.join(baseDir, "index.html"),
       ];
 
-      for (const pattern of patterns) {
-        const match = content.match(pattern);
-        if (match && match[1]) {
-          const url = match[1].trim();
-          // Basic URL validation
-          if (url.startsWith('http://') || url.startsWith('https://')) {
-            return url;
-          }
+      console.log("Checking possible paths:", possiblePaths);
+
+      // Check each possible path
+      for (const targetPath of possiblePaths) {
+        try {
+          await fs.access(targetPath);
+          console.log(`Found file at: ${targetPath}`);
+          return targetPath;
+        } catch (error) {
+          console.log(`File not found at: ${targetPath}`);
         }
       }
 
-      // If no URL found with patterns, try finding any URL in the content
-      const urlPattern = /https?:\/\/[^\s"'<>)]+/i;
-      const generalMatch = content.match(urlPattern);
-      if (generalMatch) {
-        return generalMatch[0];
-      }
-
-      console.warn(`No valid URL found in file: ${normalizedPath}`);
+      console.log("No suitable file found in any location");
       return null;
     } catch (error) {
-      console.error(`Error extracting URL from ${filename}:`, error);
+      console.error("Error finding file:", error);
       return null;
+    }
+  }
+
+  static async extractUrl(basePath, originalUrl) {
+    try {
+      console.log(
+        "Extracting URL from:",
+        basePath,
+        "Original URL:",
+        originalUrl
+      );
+      // Simply return the original URL if we find the file
+      const file = await this.findMainFile(basePath, originalUrl);
+      return file ? originalUrl : null;
+    } catch (error) {
+      console.error(`Error in extractUrl:`, error);
+      return originalUrl;
     }
   }
 
   static removeAfterFirstSlash(url) {
     if (!url) return "";
-    const slashIndex = url.indexOf("/");
-    return slashIndex !== -1 ? url.substring(0, slashIndex) : url;
+    const parts = url.split("/").filter(Boolean);
+    return parts[0] || "";
   }
 
   static extractAfterLastSlash(url) {
     if (typeof url !== "string") {
       throw new Error("Invalid URL: Expected string");
     }
-    const parts = url.split("/");
-    return parts[parts.length - 1] || "";
+    const parts = url.split("/").filter(Boolean);
+    return parts[parts.length - 1] || "index.html";
   }
 
   static removeAfterLastSlash(url) {
-    if (typeof url !== 'string') {
-        console.error("Error: Invalid URL. Expected a string but got:", url);
-        return null; // or an appropriate default value
+    if (typeof url !== "string") {
+      console.error("Error: Invalid URL. Expected a string but got:", url);
+      return null;
     }
-    const lastSlashIndex = url.lastIndexOf('/');
-    return lastSlashIndex !== -1 ? url.substring(0, lastSlashIndex) : url;
-}
-  static removeFirstEightChars(str) {
-    return str && str.length > 8 ? str.substring(8) : str;
-  }
-
-  static removeLastFourChars(str) {
-    return str && str.length > 4 ? str.substring(0, str.length - 4) : str;
+    const parts = url.split("/").filter(Boolean);
+    return parts.slice(0, -1).join("/") || parts[0];
   }
 }
 
