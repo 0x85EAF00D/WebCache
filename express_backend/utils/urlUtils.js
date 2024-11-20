@@ -60,23 +60,51 @@ class UrlUtils {
         }
       }
 
-      // Original HTML file checking logic
-      const possiblePaths = [
-        path.join(baseDir, domain, ...pathParts, "index.html"),
-        path.join(baseDir, domain, "index.html"),
-        path.join(baseDir, "index.html"),
-      ];
+      // Try the exact path first with index.html
+      const exactPath = path.join(baseDir, domain, ...pathParts, "index.html");
+      console.log("Checking exact path:", exactPath);
 
-      console.log("Checking possible paths:", possiblePaths);
-
-      for (const targetPath of possiblePaths) {
-        try {
-          await fs.access(targetPath);
-          console.log(`Found file at: ${targetPath}`);
-          return targetPath;
-        } catch (error) {
-          console.log(`File not found at: ${targetPath}`);
+      try {
+        await fs.access(exactPath);
+        const stats = await fs.stat(exactPath);
+        if (!stats.isDirectory()) {
+          console.log(`Found file at exact path: ${exactPath}`);
+          return exactPath;
         }
+      } catch (error) {
+        console.log(`File not found at exact path: ${exactPath}`);
+      }
+
+      // If exact path fails, try searching in domain directory
+      const domainPath = path.join(baseDir, domain);
+      console.log("Searching in domain directory:", domainPath);
+
+      if (await fs.pathExists(domainPath)) {
+        // Use recursive readdir to find all HTML files
+        const files = await this.findAllFiles(domainPath);
+        console.log("Found files in domain directory:", files);
+
+        // First try to find a file that matches the last part of the URL
+        for (const file of files) {
+          if (file.includes(lastPart) && file.endsWith(".html")) {
+            console.log(`Found matching file: ${file}`);
+            return file;
+          }
+        }
+
+        // If no matching file found, return the first HTML file
+        const htmlFiles = files.filter((f) => f.endsWith(".html"));
+        if (htmlFiles.length > 0) {
+          console.log(`Using first HTML file found: ${htmlFiles[0]}`);
+          return htmlFiles[0];
+        }
+      }
+
+      // Only use base directory index.html as a last resort
+      const baseIndexPath = path.join(baseDir, "index.html");
+      if (await fs.pathExists(baseIndexPath)) {
+        console.log(`Using base index.html as fallback: ${baseIndexPath}`);
+        return baseIndexPath;
       }
 
       console.log("No suitable file found in any location");
@@ -85,6 +113,28 @@ class UrlUtils {
       console.error("Error finding file:", error);
       return null;
     }
+  }
+
+  static async findAllFiles(dirPath) {
+    const results = [];
+
+    async function traverse(currentPath) {
+      const files = await fs.readdir(currentPath);
+
+      for (const file of files) {
+        const fullPath = path.join(currentPath, file);
+        const stats = await fs.stat(fullPath);
+
+        if (stats.isDirectory()) {
+          await traverse(fullPath);
+        } else if (file.endsWith(".html")) {
+          results.push(fullPath);
+        }
+      }
+    }
+
+    await traverse(dirPath);
+    return results;
   }
 
   static async extractUrl(basePath, originalUrl) {

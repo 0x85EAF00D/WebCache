@@ -22,7 +22,6 @@ class SaveController {
         return res.status(500).json({ message: httrackResult.error });
       }
 
-      // Clean the URL by removing protocol completely
       const cleanUrl = link.replace(/^https?:\/\//, "");
       console.log("Cleaned URL:", cleanUrl);
 
@@ -60,45 +59,47 @@ class SaveController {
       const urlParts = url.split("/").filter(Boolean);
       const domain = urlParts[0];
       const pathParts = urlParts.slice(1);
-      const isPdf = pathParts[pathParts.length - 1]
-        ?.toLowerCase()
-        .endsWith(".pdf");
+      const lastPart = pathParts[pathParts.length - 1];
+      const isPdf = lastPart?.toLowerCase().endsWith(".pdf");
 
       console.log("URL Parts:", urlParts);
       console.log("Domain:", domain);
       console.log("Path Parts:", pathParts);
       console.log("Is PDF:", isPdf);
 
-      // Construct source path
-      const sourcePath = path.join(
-        process.cwd(),
-        "WebsiteTempDatabase",
-        domain,
-        ...pathParts
-      );
+      // Find the actual downloaded file
+      const baseDir = path.join(process.cwd(), "WebsiteTempDatabase");
+      const foundFile = await UrlUtils.findMainFile(baseDir, url);
 
-      // Construct destination path - don't append index.html for PDFs
+      if (!foundFile) {
+        throw new Error(`Could not find downloaded file for URL: ${url}`);
+      }
+
+      console.log("Found downloaded file:", foundFile);
+
+      // Construct destination path based on the original URL structure
+      const destinationFileName = isPdf ? lastPart : `${lastPart}.html`;
       const destinationPath = path.join(
         process.cwd(),
         "DownloadedHTML",
         domain,
-        ...pathParts
+        ...pathParts.slice(0, -1),
+        destinationFileName
       );
 
-      console.log("Source path:", sourcePath);
+      console.log("Source path:", foundFile);
       console.log("Destination path:", destinationPath);
 
       // Verify source exists
-      const sourceExists = await fs.pathExists(sourcePath);
-      if (!sourceExists) {
-        throw new Error(`Source path not found: ${sourcePath}`);
+      if (!(await fs.pathExists(foundFile))) {
+        throw new Error(`Source file not found: ${foundFile}`);
       }
 
       // Ensure destination directory exists
       await fs.ensureDir(path.dirname(destinationPath));
 
       // Move the files
-      await FileService.moveFile(sourcePath, destinationPath);
+      await fs.copy(foundFile, destinationPath, { overwrite: true });
       await delay(2000);
       await FileService.cleanUpDatabase("../DownloadedHTML");
 
@@ -106,7 +107,7 @@ class SaveController {
 
       // For PDFs, use filename without extension as title
       const title = isPdf
-        ? path.basename(pathParts[pathParts.length - 1], ".pdf")
+        ? path.basename(lastPart, ".pdf")
         : await FileService.readHtmlTitle(destinationPath);
 
       await Website.create(url, title, fullPath);
