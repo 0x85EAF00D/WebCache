@@ -9,6 +9,7 @@ import {
 import SavePage from "./components/Save_Page";
 import "./App.css"; // Import the updated CSS file
 import LoadPage from "./components/Load_Page";
+import UploadPage from "./components/Upload_Page";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 function App() {
@@ -57,6 +58,9 @@ function App() {
             <li>
               <Link to="/load-websites">Load Websites</Link>
             </li>
+            <li>
+              <Link to="/upload">Upload Files</Link>
+            </li>
 
             {/* Add the theme toggle button as a new list item */}
             <li>
@@ -71,6 +75,7 @@ function App() {
           <Route path="/" element={<Navigate to="/save-link" />} />
           <Route path="/save-link" element={<SavePage />} />
           <Route path="/load-websites" element={<LoadPage />} />
+          <Route path="/upload" element={<UploadPage />} />
         </Routes>
       </Router>
     </div>
