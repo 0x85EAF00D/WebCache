@@ -62,12 +62,7 @@ function insertWebsite(web_url, title, file_path) {
             if(err) {return console.error(err);}
             //If website already exists, overwrite with updated data
             if(row) {
-                query = fs.readFileSync(path.join(__dirname, 'SQL', 'update_website.sql'), 'utf-8');
-                database.run(query, [title, file_path, web_url], (err) => {
-                    if(err) return console.error(err.message);
-                });
-                //Confirmation for testing
-                console.log(`Website data for ${title} has been updated in the database.`);
+                updateWebsite(web_url, title, file_path);
             } else {
                 //Otherwise, runs SQL query to insert website into database table
                 query = fs.readFileSync(path.join(__dirname, 'SQL', 'insert_website.sql'), 'utf-8');
@@ -86,11 +81,11 @@ function insertWebsite(web_url, title, file_path) {
 function updateWebsite(web_url, title, file_path) {
     //Will update website fields based on the input values
     query = fs.readFileSync(path.join(__dirname, 'SQL', 'update_website.sql'), 'utf-8');
-                database.run(query, [title, file_path, web_url], (err) => {
-                    if(err) return console.error(err.message);
-                });
-                //Confirmation for testing
-                console.log(`Website data for ${title} has been updated in the database.`);
+    database.run(query, [title, file_path, web_url], (err) => {
+        if(err) return console.error(err.message);
+    });
+    //Confirmation for testing
+    console.log(`Website data for ${title} has been updated in the database.`);
 }
 
 function getFilePath(web_url) {
