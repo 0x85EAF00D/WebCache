@@ -101,7 +101,7 @@ function getFilePath(web_url) {
       // Ensure the database connection is closed after query execution
       let query;
       try {
-        query = fs.readFileSync(path.join(__dirname, 'SQL', 'get_web_URL.sql'), 'utf-8');
+        query = fs.readFileSync(path.join(__dirname, 'SQL', 'get_file_path.sql'), 'utf-8');
       } catch (fileErr) {
         database.close();
         return reject(fileErr);
