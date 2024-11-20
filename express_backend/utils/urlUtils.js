@@ -35,11 +35,53 @@ class UrlUtils {
         throw new Error("Filename is required");
       }
 
-      const content = fs.readFileSync(filename, "utf-8");
-      const match = content.match(/URL=([^\s">]+)/);
-      return match ? match[1] : null;
+      // Normalize the path for cross-platform compatibility
+      const normalizedPath = path.normalize(filename);
+
+      // Check if file exists
+      if (!fs.existsSync(normalizedPath)) {
+        console.error(`File not found: ${normalizedPath}`);
+        return null;
+      }
+
+      const content = fs.readFileSync(normalizedPath, "utf-8");
+
+      // Try multiple patterns to find URLs
+      const patterns = [
+        // Meta refresh URL
+        /<meta[^>]*?http-equiv=["']?refresh["']?[^>]*?content=["']?\d*;\s*url=(.*?)["']/i,
+        // Meta redirect URL
+        /<meta[^>]*?http-equiv=["']?refresh["']?[^>]*?content=["']?\d*;\s*URL=(.*?)["']/i,
+        // Base href
+        /<base[^>]*?href=["'](.*?)["']/i,
+        // Regular link
+        /<link[^>]*?href=["'](.*?)["']/i,
+        // Anchor tag
+        /<a[^>]*?href=["'](.*?)["']/i
+      ];
+
+      for (const pattern of patterns) {
+        const match = content.match(pattern);
+        if (match && match[1]) {
+          const url = match[1].trim();
+          // Basic URL validation
+          if (url.startsWith('http://') || url.startsWith('https://')) {
+            return url;
+          }
+        }
+      }
+
+      // If no URL found with patterns, try finding any URL in the content
+      const urlPattern = /https?:\/\/[^\s"'<>)]+/i;
+      const generalMatch = content.match(urlPattern);
+      if (generalMatch) {
+        return generalMatch[0];
+      }
+
+      console.warn(`No valid URL found in file: ${normalizedPath}`);
+      return null;
     } catch (error) {
-      console.error("Error reading file:", error.message);
+      console.error(`Error extracting URL from ${filename}:`, error);
       return null;
     }
   }
