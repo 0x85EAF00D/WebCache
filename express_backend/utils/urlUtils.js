@@ -22,11 +22,15 @@ class UrlUtils {
     }
 
     const parts = url.split("/").filter(Boolean);
+    const filename = parts[parts.length - 1];
+    const isPdf = filename && filename.toLowerCase().endsWith(".pdf");
+
     return {
       url: url,
       domain: parts[0],
-      filename: parts[parts.length - 1] || "index.html",
+      filename: filename || "index.html",
       relativePath: url,
+      isPdf: isPdf,
     };
   }
 
@@ -41,20 +45,30 @@ class UrlUtils {
       const parts = originalUrl.split("/").filter(Boolean);
       const domain = parts[0];
       const pathParts = parts.slice(1);
+      const lastPart = pathParts[pathParts.length - 1] || "";
+      const isPdf = lastPart.toLowerCase().endsWith(".pdf");
 
-      // Build possible paths
+      // For PDF files, look for the exact file
+      if (isPdf) {
+        const pdfPath = path.join(baseDir, domain, ...pathParts);
+        try {
+          await fs.access(pdfPath);
+          console.log(`Found PDF at: ${pdfPath}`);
+          return pdfPath;
+        } catch (error) {
+          console.log(`PDF not found at: ${pdfPath}`);
+        }
+      }
+
+      // Original HTML file checking logic
       const possiblePaths = [
-        // Full path including article path
         path.join(baseDir, domain, ...pathParts, "index.html"),
-        // Domain root
         path.join(baseDir, domain, "index.html"),
-        // Base directory
         path.join(baseDir, "index.html"),
       ];
 
       console.log("Checking possible paths:", possiblePaths);
 
-      // Check each possible path
       for (const targetPath of possiblePaths) {
         try {
           await fs.access(targetPath);

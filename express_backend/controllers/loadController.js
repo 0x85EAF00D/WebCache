@@ -19,35 +19,45 @@ class LoadController {
       }
 
       const finalPath = fileData.path || normalizedPath;
+      const isPdf = finalPath.toLowerCase().endsWith(".pdf");
 
-      // Always set HTML content type for saved pages
-      res.setHeader("Content-Type", "text/html");
-      res.setHeader("X-Content-Type-Options", "nosniff");
-      res.setHeader("Cache-Control", "no-cache");
+      if (isPdf) {
+        // Handle PDF files
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", "inline");
+        // Stream the PDF file directly
+        const stream = fs.createReadStream(finalPath);
+        stream.pipe(res);
+      } else {
+        // Handle HTML files (existing logic)
+        res.setHeader("Content-Type", "text/html");
+        res.setHeader("X-Content-Type-Options", "nosniff");
+        res.setHeader("Cache-Control", "no-cache");
 
-      try {
-        // Read the file content
-        const content = await fs.readFile(finalPath, "utf8");
+        try {
+          // Read the file content
+          const content = await fs.readFile(finalPath, "utf8");
 
-        // Get the base directory for the website
-        const baseDir = path.dirname(finalPath);
+          // Get the base directory for the website
+          const baseDir = path.dirname(finalPath);
 
-        // Fix relative paths in the HTML
-        const modifiedContent = content.replace(
-          /(src|href)=("|')(?!http|\/\/|data:)([^"']+)("|')/g,
-          (match, attr, quote, value) => {
-            const absolutePath = path.join(baseDir, value);
-            return `${attr}=${quote}/api/saved-page?path=${encodeURIComponent(
-              absolutePath
-            )}${quote}`;
-          }
-        );
+          // Fix relative paths in the HTML
+          const modifiedContent = content.replace(
+            /(src|href)=("|')(?!http|\/\/|data:)([^"']+)("|')/g,
+            (match, attr, quote, value) => {
+              const absolutePath = path.join(baseDir, value);
+              return `${attr}=${quote}/api/saved-page?path=${encodeURIComponent(
+                absolutePath
+              )}${quote}`;
+            }
+          );
 
-        return res.send(modifiedContent);
-      } catch (readError) {
-        console.error("Error reading file:", readError);
-        // Fallback to sending file directly if read/modify fails
-        return res.sendFile(path.resolve(finalPath));
+          return res.send(modifiedContent);
+        } catch (readError) {
+          console.error("Error reading file:", readError);
+          // Fallback to sending file directly if read/modify fails
+          return res.sendFile(path.resolve(finalPath));
+        }
       }
     } catch (error) {
       console.error("Error serving file:", error);

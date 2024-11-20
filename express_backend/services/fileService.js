@@ -3,7 +3,6 @@ const path = require("path");
 const Database = require("../../database/database.js");
 const UrlUtils = require("../utils/urlUtils");
 
-
 class FileService {
   static constructPaths(urlInfo) {
     const basePath = process.cwd();
@@ -24,7 +23,6 @@ class FileService {
         urlInfo.domain,
         urlInfo.filename || "index.html"
       ),
-     
     };
 
     return paths;
@@ -58,14 +56,14 @@ class FileService {
     }
   }
 
-
   static async moveFile(sourcePath, destinationPath) {
     try {
       sourcePath = path.normalize(sourcePath);
+      const isPdf = sourcePath.toLowerCase().endsWith(".pdf");
 
-      // If sourcePath is a directory, search for HTML/PDF file
+      // If sourcePath is a directory and not a PDF, search for HTML/PDF file
       const stats = await fs.stat(sourcePath);
-      if (stats.isDirectory()) {
+      if (stats.isDirectory() && !isPdf) {
         const foundFile = await this.findHtmlOrPdfFile(sourcePath);
         if (!foundFile) {
           throw new Error(
@@ -76,7 +74,7 @@ class FileService {
       }
 
       // Ensure target directory exists
-      await this.ensureDirectoryExists(destinationPath);
+      await this.ensureDirectoryExists(path.dirname(destinationPath));
 
       // Check if source exists
       if (!(await fs.pathExists(sourcePath))) {
@@ -88,7 +86,7 @@ class FileService {
         await fs.remove(destinationPath);
       }
 
-      // Copy files instead of moving them
+      // Copy files
       await fs.copy(sourcePath, destinationPath, {
         overwrite: true,
         errorOnExist: false,
@@ -189,36 +187,40 @@ class FileService {
     }
   }
 
-
-static async check4dupesNames(url, domain, pathOBJ) {
-  const databaseQuery = await Database.getFilePath(url); //will be like index.html if in database
-  if(databaseQuery != false)// 
-  { //lals code goes here has to check if url exists and if it does renmae the new downlaoed file 
-    // to the desination path
-  }
-  else{
-     const fileExistingName =  UrlUtils.extractAfterLastSlash(url);
-     const [fileName, fileExt] = fileExistingName.split('.'); // "index" and "html"
-     const filePathWithoutFileName =  UrlUtils.removeAfterLastSlash(pathOBJ.destinationPath);
-     let fileCounter = 0;
-     let whileLoopEnter = 0;
-     let newFileName = `${fileName}.${fileExt}`;
-     let filePath = path.join(filePathWithoutFileName, newFileName); 
-     while (fs.existsSync(filePath)) {
-          // Separate the base name and the extension
-          fileCounter++;
-          newFileName = `${fileName}${fileCounter}.${fileExt}`;
-          //console.log(`HTML Wanted File name exists: Changing name to ${newFileName} and trying again`);
-          filePath = path.join(filePathWithoutFileName, newFileName); 
-          whileLoopEnter++;
-
+  static async check4dupesNames(url, domain, pathOBJ) {
+    const databaseQuery = await Database.getFilePath(url); //will be like index.html if in database
+    if (databaseQuery != false) {
+      //
+      //lals code goes here has to check if url exists and if it does renmae the new downlaoed file
+      // to the desination path
+    } else {
+      const fileExistingName = UrlUtils.extractAfterLastSlash(url);
+      const [fileName, fileExt] = fileExistingName.split("."); // "index" and "html"
+      const filePathWithoutFileName = UrlUtils.removeAfterLastSlash(
+        pathOBJ.destinationPath
+      );
+      let fileCounter = 0;
+      let whileLoopEnter = 0;
+      let newFileName = `${fileName}.${fileExt}`;
+      let filePath = path.join(filePathWithoutFileName, newFileName);
+      while (fs.existsSync(filePath)) {
+        // Separate the base name and the extension
+        fileCounter++;
+        newFileName = `${fileName}${fileCounter}.${fileExt}`;
+        //console.log(`HTML Wanted File name exists: Changing name to ${newFileName} and trying again`);
+        filePath = path.join(filePathWithoutFileName, newFileName);
+        whileLoopEnter++;
       }
-      if(whileLoopEnter>0)
-      { // file needs to be renamed with correct file name
-        pathOBJ.destinationPath= path.join(pathOBJ.downloadedPathOUT, domain, newFileName);
+      if (whileLoopEnter > 0) {
+        // file needs to be renamed with correct file name
+        pathOBJ.destinationPath = path.join(
+          pathOBJ.downloadedPathOUT,
+          domain,
+          newFileName
+        );
         //console.log(`path destination output : ${ pathOBJ.destinationPath}\n`);
       }
-    } 
+    }
   }
 }
 module.exports = FileService;

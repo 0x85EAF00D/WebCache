@@ -57,14 +57,17 @@ class SaveController {
 
   static async handleWebpageUrl(url, originalLink, res) {
     try {
-      // Split URL into parts, ignoring empty strings
       const urlParts = url.split("/").filter(Boolean);
       const domain = urlParts[0];
       const pathParts = urlParts.slice(1);
+      const isPdf = pathParts[pathParts.length - 1]
+        ?.toLowerCase()
+        .endsWith(".pdf");
 
       console.log("URL Parts:", urlParts);
       console.log("Domain:", domain);
       console.log("Path Parts:", pathParts);
+      console.log("Is PDF:", isPdf);
 
       // Construct source path
       const sourcePath = path.join(
@@ -74,13 +77,12 @@ class SaveController {
         ...pathParts
       );
 
-      // Construct destination path
+      // Construct destination path - don't append index.html for PDFs
       const destinationPath = path.join(
         process.cwd(),
         "DownloadedHTML",
         domain,
-        ...pathParts,
-        "index.html"
+        ...pathParts
       );
 
       console.log("Source path:", sourcePath);
@@ -101,9 +103,12 @@ class SaveController {
       await FileService.cleanUpDatabase("../DownloadedHTML");
 
       const fullPath = path.resolve(destinationPath);
-      const title = await FileService.readHtmlTitle(destinationPath);
 
-      // Use the clean URL for database storage
+      // For PDFs, use filename without extension as title
+      const title = isPdf
+        ? path.basename(pathParts[pathParts.length - 1], ".pdf")
+        : await FileService.readHtmlTitle(destinationPath);
+
       await Website.create(url, title, fullPath);
       return res.status(200).json({ message: `Link saved: ${originalLink}` });
     } catch (error) {
