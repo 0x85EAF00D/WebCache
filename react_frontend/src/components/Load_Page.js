@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Search } from "lucide-react";
+import { Search, Trash2 } from "lucide-react";
 
 const LoadPage = () => {
   const [websites, setWebsites] = useState([]);
@@ -11,18 +11,20 @@ const LoadPage = () => {
   const [isDarkMode, setIsDarkMode] = useState(
     window.matchMedia("(prefers-color-scheme: dark)").matches
   );
+  const [deleteConfirmation, setDeleteConfirmation] = useState({
+    show: false,
+    websiteId: null,
+    websiteTitle: "",
+  });
 
   useEffect(() => {
-    // Listen for changes in color scheme preference
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const handleChange = (e) => setIsDarkMode(e.matches);
-
     mediaQuery.addEventListener("change", handleChange);
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 
   useEffect(() => {
-    // Apply data-bs-theme attribute to body when dark mode changes
     document.body.setAttribute("data-bs-theme", isDarkMode ? "dark" : "light");
   }, [isDarkMode]);
 
@@ -41,16 +43,11 @@ const LoadPage = () => {
 
   const fetchWebsites = async () => {
     try {
-      console.log("Fetching websites...");
       const response = await fetch("http://localhost:3000/api/get-links");
-
       if (!response.ok) {
         throw new Error(`Failed to load websites: ${response.status}`);
       }
-
       const data = await response.json();
-      console.log("Received data:", data);
-
       setWebsites(data);
       setFilteredWebsites(data);
     } catch (error) {
@@ -65,13 +62,43 @@ const LoadPage = () => {
     setSearchQuery(event.target.value);
   };
 
+  const handleDeleteClick = (websiteId, websiteTitle) => {
+    setDeleteConfirmation({
+      show: true,
+      websiteId,
+      websiteTitle,
+    });
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:3000/api/delete-website/${deleteConfirmation.websiteId}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete website: ${response.status}`);
+      }
+
+      const updatedWebsites = websites.filter(
+        (website) => website.id !== deleteConfirmation.websiteId
+      );
+      setWebsites(updatedWebsites);
+      setDeleteConfirmation({ show: false, websiteId: null, websiteTitle: "" });
+    } catch (error) {
+      console.error("Error deleting website:", error);
+      setError("Failed to delete website. Please try again.");
+    }
+  };
+
   const handleFileOpen = async (website) => {
     try {
       const url = `/api/saved-page?path=${encodeURIComponent(
         website.file_path
       )}`;
-      console.log("Opening saved page:", url);
-
       const newWindow = window.open(url, "_blank");
       if (newWindow === null) {
         throw new Error(
@@ -156,23 +183,32 @@ const LoadPage = () => {
             </div>
           ) : (
             <div className="list-group">
-              {filteredWebsites.map((website, index) => (
+              {filteredWebsites.map((website) => (
                 <div
-                  key={index}
+                  key={website.id}
                   className="list-group-item list-group-item-action p-3"
-                  onClick={() => handleFileOpen(website)}
-                  style={{ cursor: "pointer" }}
                 >
-                  <div className="d-flex flex-column">
-                    <h5 className="mb-1 text-primary">
-                      {website.title || "Untitled"}
-                    </h5>
-                    <p className="mb-1 text-break small">{website.web_url}</p>
-                    <div className="d-flex justify-content-between align-items-center mt-2">
-                      <small className="text-body-secondary">
-                        Saved on:{" "}
-                        {new Date(website.created).toLocaleDateString()}
+                  <div className="d-flex justify-content-between align-items-start">
+                    <div
+                      className="flex-grow-1"
+                      onClick={() => handleFileOpen(website)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      <h5 className="mb-1 text-primary">
+                        {website.title || "Untitled"}
+                      </h5>
+                      <p className="mb-1 text-break small">{website.web_url}</p>
+                      <div className="mt-2">
+                        <small className="text-body-secondary">
+                          Saved on:{" "}
+                          {new Date(website.created).toLocaleDateString()}
+                        </small>
+                      </div>
+                      <small className="text-body-secondary mt-1 text-break">
+                        File: {website.file_path}
                       </small>
+                    </div>
+                    <div className="d-flex align-items-start gap-2">
                       <span
                         className={`badge ${
                           website.exists
@@ -182,10 +218,16 @@ const LoadPage = () => {
                       >
                         {website.exists ? "Available" : "Missing"}
                       </span>
+                      <button
+                        className="btn btn-danger btn-sm"
+                        onClick={() =>
+                          handleDeleteClick(website.id, website.title)
+                        }
+                        aria-label="Delete website"
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </div>
-                    <small className="text-body-secondary mt-1 text-break">
-                      File: {website.file_path}
-                    </small>
                   </div>
                 </div>
               ))}
@@ -193,6 +235,65 @@ const LoadPage = () => {
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmation.show && (
+        <div
+          className="modal d-block"
+          tabIndex="-1"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Confirm Deletion</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() =>
+                    setDeleteConfirmation({
+                      show: false,
+                      websiteId: null,
+                      websiteTitle: "",
+                    })
+                  }
+                ></button>
+              </div>
+              <div className="modal-body">
+                <p>
+                  Are you sure you want to delete "
+                  {deleteConfirmation.websiteTitle}"?
+                </p>
+                <p className="text-danger mb-0">
+                  This action cannot be undone.
+                </p>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() =>
+                    setDeleteConfirmation({
+                      show: false,
+                      websiteId: null,
+                      websiteTitle: "",
+                    })
+                  }
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={handleConfirmDelete}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
