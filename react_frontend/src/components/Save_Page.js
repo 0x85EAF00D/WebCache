@@ -106,10 +106,11 @@ const SavePage = () => {
         if (response.ok) {
           setNotification({ message: result.message, type: "success" });
         } else {
-          setNotification({
-            message: `Error: ${result.message}`,
-            type: "error",
-          });
+          const customMessage =
+            result.message === "Failed to process downloaded content"
+            ? "Failed to retrieve website files due to incompatible website"
+            : 'Error: ${results.message}';
+            setNotification({ message: customMessage, type:"error"});
         }
       } catch (error) {
         console.error("Error:", error);
