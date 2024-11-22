@@ -13,6 +13,6 @@ router.get('/api/saved-page', LoadController.getSavedPage);
 router.get('/api/get-links', LoadController.getLinks);
 router.post('/api/save-link', SaveController.saveLink);
 router.post('/api/upload-files', upload.array('files'), UploadController.uploadFiles);
-router.delete('api/delete-website', DeleteController.deletePage);
+router.delete('/api/delete-website/:websiteId', DeleteController.deletePage);
 
 module.exports = router;
