@@ -5,7 +5,6 @@ const Website = require("../models/Website");
 const FileService = require("../services/fileService");
 const UrlUtils = require("../utils/urlUtils");
 const HttrackService = require("../services/httrackService");
-const Database = require("../../database/database");
 const { delay } = require("../utils/timeUtils");
 
 class SaveController {
