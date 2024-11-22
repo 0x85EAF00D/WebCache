@@ -9,7 +9,7 @@ class UploadService {
       destination: function (req, file, cb) {
         const uploadPath = path.join(
           process.cwd(),
-          "DownloadedHTML",
+          "database/Websites",
           "uploads"
         );
         fs.ensureDirSync(uploadPath);

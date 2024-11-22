@@ -26,7 +26,7 @@ class SaveController {
       console.log("Cleaned URL:", cleanUrl);
 
       const url = await UrlUtils.extractUrl(
-        path.join(process.cwd(), "WebsiteTempDatabase"),
+        path.join(process.cwd(), "database/WebsiteTempDatabase"),
         cleanUrl
       );
 
@@ -68,7 +68,7 @@ class SaveController {
       console.log("Is PDF:", isPdf);
 
       // Find the actual downloaded file
-      const baseDir = path.join(process.cwd(), "WebsiteTempDatabase");
+      const baseDir = path.join(process.cwd(), "database/WebsiteTempDatabase");
       const foundFile = await UrlUtils.findMainFile(baseDir, url);
 
       if (!foundFile) {
@@ -101,7 +101,7 @@ class SaveController {
       // Move the files
       await fs.copy(foundFile, destinationPath, { overwrite: true });
       await delay(2000);
-      await FileService.cleanUpDatabase("../DownloadedHTML");
+      await FileService.cleanUpDatabase("../database/DownloadedHTML");
 
       const fullPath = path.resolve(destinationPath);
 

@@ -5,7 +5,7 @@ const UrlUtils = require("../utils/urlUtils");
 class FileService {
   static constructPaths(urlInfo) {
     const basePath = process.cwd();
-    const tempDatabasePath = path.join(basePath, "WebsiteTempDatabase");
+    const tempDatabasePath = path.join(basePath, "database/WebsiteTempDatabase");
     const downloadedPath = path.join(basePath, "database/Websites"); 
     // Create paths using path.join to ensure cross-platform compatibility
     const paths = {
@@ -112,7 +112,7 @@ class FileService {
         // Construct the full path to the temporary database directory
         // process.cwd() gets the current working directory of the Node.js process
         // Using path.join ensures cross-platform compatibility (Windows/Mac/Linux)
-        const databasePath = path.join(process.cwd(), "WebsiteTempDatabase");
+        const databasePath = path.join(process.cwd(), "database/WebsiteTempDatabase");
 
         // Check if the database directory exists before trying to clean it
         // fs.pathExists is from fs-extra and returns a Promise<boolean>

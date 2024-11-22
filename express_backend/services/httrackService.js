@@ -4,7 +4,7 @@ const path = require("path");
 class HttrackService {
   static async downloadWebsite(link) {
     // Ensure output directory is absolute path
-    const outputDir = path.join(process.cwd(), "WebsiteTempDatabase");
+    const outputDir = path.join(process.cwd(), "database/WebsiteTempDatabase");
 
     // Build httrack command with proper options
     const command = `httrack "${link}" -r1 -O "${outputDir}" -%eN0 -q`;
