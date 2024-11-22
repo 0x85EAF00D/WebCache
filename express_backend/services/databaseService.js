@@ -139,17 +139,16 @@ class DatabaseService {
   // Delete website from database
   static async deleteWebsite(id) {
     try {
-      await this.#dbRun(`
-        DELETE FROM websites
-        WHERE id = ?;
-      `, [id]
-    );
-      console.log("Website successfully deleted");
+        await this.#dbRun(
+            `DELETE FROM websites WHERE id = ?;`, 
+            [id]
+        );
+        console.log("Website successfully deleted");
     } catch (error) {
-      console.error("Error deleting website from database:", error);
-      throw error;
+        console.error("Error deleting website from database:", error);
+        throw error;
     }
-}
+  }
 
   // Close database connection
   static async close() {
@@ -164,75 +163,6 @@ class DatabaseService {
       });
     });
   }
-  static async deleteWebsite(web_url, title) {
-    return new Promise((resolve, reject) => {
-        const database = new sqlite3.Database(path.join(__dirname, '../database', 'websites.db'), sqlite3.OPEN_READWRITE, (err) => {
-            if(err) {
-                reject(err);
-                database.close();
-            }
-        });
-    
-        //Runs SQL query to delete website from database table
-        let query = fs.readFileSync(path.join(__dirname, 'SQL', 'delete_website.sql'), 'utf-8');
-        database.run(query, [web_url], (err) => {
-            if(err) {
-                reject(err);
-                database.close();
-            }
-        });
-    
-        //Confirmation for testing
-        resolve(`${title} has been deleted from the database.`);
-        database.close();
-    });
-}
-
-// used in unit tests for SQL
-static async getFilePath(web_url) {
-
-  return new Promise((resolve, reject) => {
-    const dbPath = path.join(__dirname, '../database', 'websites.db');
-    const database = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE, (err) => {
-      if (err) {
-        reject(err);
-        return; // Prevent further execution
-      }
-    });
-
-    // Ensure the database connection is closed after query execution
-    let query;
-    try {
-      query = fs.readFileSync(path.join(__dirname, 'SQL', 'get_file_path.sql'), 'utf-8');
-    } catch (fileErr) {
-      database.close();
-      return reject(fileErr);
-    }
-
-    // Execute the query
-    database.get(query, [web_url], (err, row) => {
-      if (err) {
-        database.close(); // Always close the database
-        return reject(err);
-      }
-      if (row) {
-        database.close();
-        resolve(row.file_path);
-      } else {
-        database.close();
-        resolve(false);
-      }
-    });
-  });
-}
-
-
-
-
-
-
-
-
 }
 
 module.exports = DatabaseService;
