@@ -80,7 +80,7 @@ class SaveController {
       const destinationFileName = isPdf ? lastPart : `${lastPart}.html`;
       const destinationPath = path.join(
         process.cwd(),
-        "DownloadedHTML",
+        "database/Websites",
         domain,
         ...pathParts.slice(0, -1),
         destinationFileName

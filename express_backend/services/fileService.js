@@ -6,10 +6,10 @@ class FileService {
   static constructPaths(urlInfo) {
     const basePath = process.cwd();
     const tempDatabasePath = path.join(basePath, "WebsiteTempDatabase");
-    const downloadedPath = path.join(basePath, "DownloadedHTML"); // might want to change this to databse folder
+    const downloadedPath = path.join(basePath, "database/Websites"); 
     // Create paths using path.join to ensure cross-platform compatibility
     const paths = {
-      downloadedPathOUT: path.join(basePath, "DownloadedHTML"),
+      downloadedPathOUT: path.join(basePath, "database/Websites"),
       // Temp path where HTTrack initially downloads
       tempPath: path.join(tempDatabasePath, urlInfo.domain),
 
