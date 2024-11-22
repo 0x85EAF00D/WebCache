@@ -118,32 +118,6 @@ class SaveController {
     }
   }
 
-  static async handleDirectFileUrl(link, res) {
-    try {
-      // Clean the URL by removing protocol
-      const cleanUrl = link.replace(/^https?:\/\//, "");
-      const urlInfo = UrlUtils.parseDirectUrl(cleanUrl);
-      const paths = FileService.constructPaths(urlInfo);
-
-      await Database.CheckIfDatabaseExists();
-      await FileService.check4dupesNames(urlInfo.url, urlInfo.domain, paths);
-
-      await FileService.moveFile(paths.tempPath, paths.destinationPath);
-      await delay(2000);
-      await FileService.cleanUpDatabase("../DownloadedHTML");
-
-      const fullPath = path.resolve(paths.destinationPath);
-      const title = path.basename(
-        urlInfo.filename,
-        path.extname(urlInfo.filename)
-      );
-      await Website.create(cleanUrl, title, fullPath);
-      return res.status(200).json({ message: `Link saved: ${link}` });
-    } catch (error) {
-      console.error("Error handling direct file URL:", error);
-      throw error;
-    }
-  }
 }
 
 module.exports = SaveController;

@@ -149,6 +149,29 @@ class DatabaseService {
       });
     });
   }
+  static async deleteWebsite(web_url, title) {
+    return new Promise((resolve, reject) => {
+        const database = new sqlite3.Database(path.join(__dirname, '../database', 'websites.db'), sqlite3.OPEN_READWRITE, (err) => {
+            if(err) {
+                reject(err);
+                database.close();
+            }
+        });
+    
+        //Runs SQL query to delete website from database table
+        let query = fs.readFileSync(path.join(__dirname, 'SQL', 'delete_website.sql'), 'utf-8');
+        database.run(query, [web_url], (err) => {
+            if(err) {
+                reject(err);
+                database.close();
+            }
+        });
+    
+        //Confirmation for testing
+        resolve(`${title} has been deleted from the database.`);
+        database.close();
+    });
+}
 }
 
 module.exports = DatabaseService;
