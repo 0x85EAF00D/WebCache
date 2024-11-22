@@ -136,6 +136,21 @@ class DatabaseService {
     }
   }
 
+  // Delete website from database
+  static async deleteWebsite(id) {
+    try {
+      await this.#dbRun(`
+        DELETE FROM websites
+        WHERE id = ?;
+      `, [id]
+    );
+      console.log("Website successfully deleted");
+    } catch (error) {
+      console.error("Error deleting website from database:", error);
+      throw error;
+    }
+}
+
   // Close database connection
   static async close() {
     return new Promise((resolve, reject) => {
