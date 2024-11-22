@@ -5,13 +5,12 @@ Some downloaded html files don't open correctly in chrome, but will open correct
 connect title editing to the back end
 
 #3
-move downloadHTML folder downloads into database/Websites
-
-#4
 link delete button to backend and data base: delete entry and file
 
-#5 Idea: Make it so the user can access the current URL of every website, letting them store current website URL's for websites that we can't download
+#4
+Idea: Make it so the user can access the current URL of every website, letting them store current website URL's for websites that we can't download
 
-#6 Letting user categorize files for better organization
+#5
+Letting user categorize files for better organization
 
 
