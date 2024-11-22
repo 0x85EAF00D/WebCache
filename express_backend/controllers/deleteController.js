@@ -10,7 +10,7 @@ class DeleteController {
                 return resp.status(400).json({ error: "ID is required" });
             }
             // Call the delete function in DatabaseService
-            await DatabaseService.deleteWebsite(id);
+            await Database.deleteWebsite(id);
 
             resp.status(200).json({ message: "Website successfully deleted" });
         } catch (error) {
