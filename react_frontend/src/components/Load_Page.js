@@ -8,6 +8,7 @@ const LoadPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [debugInfo, setDebugInfo] = useState(null);
+  const [sortOption, setSortOption] = useState("");
   const [isDarkMode, setIsDarkMode] = useState(
     window.matchMedia("(prefers-color-scheme: dark)").matches
   );
@@ -44,8 +45,15 @@ const LoadPage = () => {
         website.web_url?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         website.title?.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+    if (sortOption === "alphabetical") {
+      filtered.sort((a, b) => a.title.localeCompare(b.title));
+    } else if (sortOption === "dateAdded") {
+      filtered.sort((a, b) => new Date(b.created) - new Date(a.created));
+    }
+    
     setFilteredWebsites(filtered);
-  }, [searchQuery, websites]);
+  }, [searchQuery, websites, sortOption]);
 
   const fetchWebsites = async () => {
     try {
@@ -183,6 +191,21 @@ const LoadPage = () => {
     }
   };
 
+  // Allows the user to sort A-Z or by date added
+  const handleSortChange = (event) => {
+    const option = event.target.value;
+    setSortOption(option);
+  
+    let sortedWebsites = [...websites];
+    if (option === "alphabetical") {
+      sortedWebsites.sort((a, b) => a.title.localeCompare(b.title));
+    } else if (option === "dateAdded") {
+      sortedWebsites.sort((a, b) => new Date(b.created) - new Date(a.created));
+    }
+  
+    setFilteredWebsites(sortedWebsites);
+  };
+
   if (isLoading) {
     return (
       <div className="container py-5">
@@ -217,8 +240,9 @@ const LoadPage = () => {
         </div>
       )}
 
+      {/* Dropdown menu */}
       <div className="row justify-content-center mb-4">
-        <div className="col-12 col-md-8">
+        <div className="col-12 col-md-8 d-flex justify-content-between">
           <div className="input-group">
             <span className="input-group-text border-end-0 bg-body">
               <Search size={20} />
@@ -231,6 +255,15 @@ const LoadPage = () => {
               onChange={handleSearchChange}
             />
           </div>
+          <select
+            className="form-select ms-2"
+            value={sortOption}
+            onChange={handleSortChange}
+          >
+            <option value="">Sort By</option>
+            <option value="alphabetical">Alphabetical</option>
+            <option value="dateAdded">Date Added</option>
+          </select>
         </div>
       </div>
 
@@ -440,6 +473,7 @@ const LoadPage = () => {
           </div>
         </div>
       )}
+      
     </div>
   );
 };
