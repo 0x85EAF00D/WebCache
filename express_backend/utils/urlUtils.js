@@ -153,29 +153,6 @@ class UrlUtils {
       return originalUrl;
     }
   }
-
-  static removeAfterFirstSlash(url) {
-    if (!url) return "";
-    const parts = url.split("/").filter(Boolean);
-    return parts[0] || "";
-  }
-
-  static extractAfterLastSlash(url) {
-    if (typeof url !== "string") {
-      throw new Error("Invalid URL: Expected string");
-    }
-    const parts = url.split("/").filter(Boolean);
-    return parts[parts.length - 1] || "index.html";
-  }
-
-  static removeAfterLastSlash(url) {
-    if (typeof url !== "string") {
-      console.error("Error: Invalid URL. Expected a string but got:", url);
-      return null;
-    }
-    const parts = url.split("/").filter(Boolean);
-    return parts.slice(0, -1).join("/") || parts[0];
-  }
 }
 
 module.exports = UrlUtils;

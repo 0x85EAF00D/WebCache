@@ -2,14 +2,13 @@
 Some downloaded html files don't open correctly in chrome, but will open correct in safari and Firefox
 
 #2
-On windows version the software the function check4dupesNames doesn't seem to work, it works on linux
-On windows the title is also not saved when loading the saved html files
+connect title editing to the back end
 
 #3
-Make a Manual file entry for html and pdf in new top tab 
+move downloadHTML folder downloads into database/Websites
 
 #4
-Getting a failed message everytime I try to delete a website or edit one
+link delete button to backend and data base: delete entry and file
 
 #5 Idea: Make it so the user can access the current URL of every website, letting them store current website URL's for websites that we can't download
 

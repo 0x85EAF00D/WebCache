@@ -1,4 +1,4 @@
-const { insertWebsite, deleteWebsite, getWebsites, getFilePath } = require('../database.js'); // Import SQLite functions
+const { createWebsite, deleteWebsite, getAllWebsites, getFilePath } = require('../express_backend/services/databaseServices.js'); // Import SQLite functions
 
 //Test function to verify that deleteWebsite() works as intended
 async function deleteFromDatabase(web_url, title) {

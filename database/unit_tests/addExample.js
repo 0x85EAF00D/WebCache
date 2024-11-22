@@ -1,8 +1,8 @@
-const { insertWebsite, deleteWebsite, getWebsites, getFilePath } = require('../database.js'); // Import SQLite functions
+const { createWebsite, deleteWebsite, getAllWebsites, getFilePath } = require('../express_backend/services/databaseServices.js'); // Import SQLite functions
 
 //Test function to verify that insertWebsite() and updateWebsite() works as intended
 async function addToDatabase(web_url, title, file_path) {
-    insertWebsite(web_url, title, file_path);
+    createWebsite(web_url, title, file_path);
 }
 
 //Set this url and title with test information
