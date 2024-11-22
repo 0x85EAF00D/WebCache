@@ -3,6 +3,7 @@
 express_backend/node_modules
 express_backend/DownloadedHTML
 express_backend/database/*.db
+express_backend/database/Websites
 express_backend/WebsiteTempDatabase
 database/node_modules
 
