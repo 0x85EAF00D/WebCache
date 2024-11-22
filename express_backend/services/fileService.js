@@ -107,35 +107,54 @@ class FileService {
   }
 
   static async cleanUpDatabase(excludeFolder) {
+    // This method removes all files and folders from the temp database except for a specified folder
     try {
-      const databasePath = path.join(process.cwd(), "WebsiteTempDatabase");
+        // Construct the full path to the temporary database directory
+        // process.cwd() gets the current working directory of the Node.js process
+        // Using path.join ensures cross-platform compatibility (Windows/Mac/Linux)
+        const databasePath = path.join(process.cwd(), "WebsiteTempDatabase");
 
-      // Check if directory exists first
-      if (!(await fs.pathExists(databasePath))) {
-        return;
-      }
+        // Check if the database directory exists before trying to clean it
+        // fs.pathExists is from fs-extra and returns a Promise<boolean>
+        if (!(await fs.pathExists(databasePath))) {
+            // If the directory doesn't exist, there's nothing to clean up
+            return;
+        }
 
-      const files = await fs.readdir(databasePath);
+        // Read the contents of the database directory
+        // This returns an array of file/folder names in the directory
+        const files = await fs.readdir(databasePath);
 
-      await Promise.all(
-        files.map(async (file) => {
-          if (file !== excludeFolder) {
-            const filePath = path.join(databasePath, file);
-            try {
-              await fs.remove(filePath);
-            } catch (error) {
-              console.warn(
-                `Warning: Could not remove ${filePath}: ${error.message}`
-              );
-            }
-          }
-        })
-      );
+        // Use Promise.all to handle multiple file deletions concurrently
+        // This is more efficient than deleting files sequentially
+        await Promise.all(
+            files.map(async (file) => {
+                // Only process files/folders that aren't the excluded folder
+                if (file !== excludeFolder) {
+                    // Construct the full path to the file/folder to be removed
+                    const filePath = path.join(databasePath, file);
+                    
+                    try {
+                        // fs.remove (from fs-extra) recursively removes files and directories
+                        // It's like rm -rf in Unix or del /s in Windows
+                        await fs.remove(filePath);
+                    } catch (error) {
+                        // If deletion fails for any reason, log a warning but continue
+                        // This ensures one failed deletion doesn't stop the entire cleanup
+                        console.warn(
+                            `Warning: Could not remove ${filePath}: ${error.message}`
+                        );
+                    }
+                }
+            })
+        );
     } catch (error) {
-      console.error("Error cleaning up database:", error);
-      throw error;
+        // If any error occurs in the main try block (e.g., directory access issues)
+        // Log it and rethrow to let the caller handle it
+        console.error("Error cleaning up database:", error);
+        throw error;
     }
-  }
+}
 
   static async ensureDirectoryExists(filePath) {
     const dir = path.dirname(filePath);
