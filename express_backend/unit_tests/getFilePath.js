@@ -1,4 +1,4 @@
-const { createWebsite, deleteWebsite, getAllWebsites, getFilePath } = require('../express_backend/services/databaseServices.js'); // Import SQLite functions
+const { createWebsite, deleteWebsite, getAllWebsites, getFilePath } = require('../services/databaseServices.js'); // Import SQLite functions
 
 async function displayFilePath(web_url) {
     let path = await getFilePath(web_url);

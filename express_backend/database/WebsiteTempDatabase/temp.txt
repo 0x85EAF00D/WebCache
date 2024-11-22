@@ -1,1 +1,0 @@
-this doc is used to create database folder and Websites folder, without it these needed folders are deleted
