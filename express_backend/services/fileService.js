@@ -1,6 +1,5 @@
 const fs = require("fs-extra");
 const path = require("path");
-const Database = require("../../database/database.js");
 const UrlUtils = require("../utils/urlUtils");
 
 class FileService {
