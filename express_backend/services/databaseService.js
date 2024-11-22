@@ -187,6 +187,52 @@ class DatabaseService {
         database.close();
     });
 }
+
+// used in unit tests for SQL
+static async getFilePath(web_url) {
+
+  return new Promise((resolve, reject) => {
+    const dbPath = path.join(__dirname, '../database', 'websites.db');
+    const database = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE, (err) => {
+      if (err) {
+        reject(err);
+        return; // Prevent further execution
+      }
+    });
+
+    // Ensure the database connection is closed after query execution
+    let query;
+    try {
+      query = fs.readFileSync(path.join(__dirname, 'SQL', 'get_file_path.sql'), 'utf-8');
+    } catch (fileErr) {
+      database.close();
+      return reject(fileErr);
+    }
+
+    // Execute the query
+    database.get(query, [web_url], (err, row) => {
+      if (err) {
+        database.close(); // Always close the database
+        return reject(err);
+      }
+      if (row) {
+        database.close();
+        resolve(row.file_path);
+      } else {
+        database.close();
+        resolve(false);
+      }
+    });
+  });
+}
+
+
+
+
+
+
+
+
 }
 
 module.exports = DatabaseService;
