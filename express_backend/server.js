@@ -4,9 +4,14 @@ const cors = require("cors");
 const path = require("path");
 const { exec } = require("child_process");
 const routes = require("./routes");
+const requestLogger = require('./middleware/requestLogger');
 
 const app = express();
 const port = 3000;
+
+// Add logger middleware before routes
+//comment this out to disable the debugging output
+app.use(requestLogger);
 
 app.use(cors());
 app.use(express.json());
@@ -52,6 +57,8 @@ src/
   │   └── pathUtils.js
   ├── routes/
   │   └── index.js
+  ├── middleware/
+  │   └── requestLogger.js
   ├── models/
   │   └── website.js
   └── server.js
