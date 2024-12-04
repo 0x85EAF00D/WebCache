@@ -30,7 +30,7 @@ class LoadController {
         const stream = fs.createReadStream(finalPath);
         stream.pipe(res);
       } else {
-        // Handle HTML files (existing logic)
+        // Handle HTML files
         res.setHeader("Content-Type", "text/html");
         res.setHeader("X-Content-Type-Options", "nosniff");
         res.setHeader("Cache-Control", "no-cache");
@@ -42,10 +42,20 @@ class LoadController {
           // Get the base directory for the website
           const baseDir = path.dirname(finalPath);
 
-          // Fix relative paths in the HTML
+          // Fix relative paths in the HTML while preserving javascript: URLs
           const modifiedContent = content.replace(
-            /(src|href)=("|')(?!http|\/\/|data:)([^"']+)("|')/g,
+            /(src|href)=("|')([^"']+)("|')/g,
             (match, attr, quote, value) => {
+              // Don't modify javascript: URLs
+              if (value.toLowerCase().startsWith('javascript:')) {
+                return match;
+              }
+              
+              // Don't modify absolute URLs or data URLs
+              if (value.startsWith('http') || value.startsWith('//') || value.startsWith('data:')) {
+                return match;
+              }
+
               const absolutePath = path.join(baseDir, value);
               return `${attr}=${quote}/api/saved-page?path=${encodeURIComponent(
                 absolutePath
