@@ -83,7 +83,7 @@ class LoadController {
   static async getLinks(req, res) {
     try {
       const websites = await Website.getAll();
-      console.log("Raw websites before processing:", websites);
+      //console.log("Raw websites before processing:", websites);
       
       const websitesWithPaths = await Promise.all(
         websites.map(async website => {
@@ -102,10 +102,10 @@ class LoadController {
         })
       );
       
-      console.log("Final processed websites:", websitesWithPaths);
+      //console.log("Final processed websites:", websitesWithPaths);
       res.json(websitesWithPaths);
     } catch (error) {
-      console.error("Error fetching websites:", error);
+      //console.error("Error fetching websites:", error);
       res.status(500).json({
         error: "Failed to fetch websites",
         details: error.message,
