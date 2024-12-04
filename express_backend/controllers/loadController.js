@@ -1,5 +1,6 @@
 const Website = require("../models/Website");
 const FileService = require("../services/fileService");
+const DatabaseService = require("../services/databaseService");
 const path = require("path");
 const fs = require("fs-extra");
 
@@ -122,6 +123,40 @@ class LoadController {
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("Cache-Control", "no-cache");
   }
+
+
+
+
+  static async updateWebsiteTitle(req, res) {
+    try {
+      const { websiteId } = req.params;
+      const { title } = req.body;
+
+      if (!title || !title.trim()) {
+        return res.status(400).json({ error: 'Title is required' });
+      }
+
+      if (!websiteId || isNaN(parseInt(websiteId))) {
+        return res.status(400).json({ error: 'Invalid website ID' });
+      }
+
+      const updatedWebsite = await DatabaseService.updateWebsiteTitle(
+        parseInt(websiteId),
+        title.trim()
+      );
+
+      res.json(updatedWebsite);
+    } catch (error) {
+      console.error('Error updating website title:', error);
+      res.status(500).json({
+        error: 'Failed to update website title',
+        details: error.message
+      });
+    }
+  }
+
 }
+
+
 
 module.exports = LoadController;

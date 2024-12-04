@@ -170,6 +170,27 @@ class DatabaseService {
       });
     });
   }
+
+  static async updateWebsiteTitle(id, newTitle) {
+    try {
+      const result = await this.#dbRun(
+        'UPDATE websites SET title = ? WHERE id = ?',
+        [newTitle, id]
+      );
+      
+      if (result.changes === 0) {
+        throw new Error('Website not found');
+      }
+
+      // Get the updated website data
+      const updatedWebsite = await this.getWebsiteById(id);
+      return updatedWebsite;
+    } catch (error) {
+      console.error('Error updating website title:', error);
+      throw error;
+    }
+  }
+
 }
 
 module.exports = DatabaseService;

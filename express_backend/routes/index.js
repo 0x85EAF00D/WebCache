@@ -14,5 +14,7 @@ router.get('/api/get-links', LoadController.getLinks);
 router.post('/api/save-link', SaveController.saveLink);
 router.post('/api/upload-files', upload.array('files'), UploadController.uploadFiles);
 router.delete('/api/delete-website/:websiteId', DeleteController.deletePage);
+router.put('/api/website/:websiteId/update-title', LoadController.updateWebsiteTitle);
+
 
 module.exports = router;
