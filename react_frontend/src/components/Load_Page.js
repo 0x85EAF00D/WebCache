@@ -12,6 +12,8 @@ const LoadPage = () => {
   const [isDarkMode, setIsDarkMode] = useState(
     window.matchMedia("(prefers-color-scheme: dark)").matches
   );
+  const [notification, setNotification] = useState(null);
+
   const [deleteConfirmation, setDeleteConfirmation] = useState({
     show: false,
     websiteId: null,
@@ -57,13 +59,27 @@ const LoadPage = () => {
 
   const fetchWebsites = async () => {
     try {
-      const response = await fetch("http://localhost:3000/api/get-links");
+      const response = await fetch("/api/get-links");
       if (!response.ok) {
         throw new Error(`Failed to load websites: ${response.status}`);
       }
       const data = await response.json();
-      setWebsites(data);
-      setFilteredWebsites(data);
+      console.log("Received website data:", data);
+  
+      // Ensure all required fields are present
+      const processedData = data.map(website => {
+        if (!website.id) {
+          console.warn("Website missing ID:", website);
+        }
+        return {
+          ...website,
+          title: website.title || "Untitled",
+          exists: website.exists ?? true
+        };
+      });
+  
+      setWebsites(processedData);
+      setFilteredWebsites(processedData);
     } catch (error) {
       console.error("Error during fetch:", error);
       setError(error.message);
@@ -77,6 +93,14 @@ const LoadPage = () => {
   };
 
   const handleDeleteClick = (websiteId, websiteTitle) => {
+    console.log("Delete clicked for website:", { id: websiteId, title: websiteTitle });
+    if (!websiteId) {
+      setNotification({
+        type: "error",
+        message: "Cannot delete: Website ID is missing"
+      });
+      return;
+    }
     setDeleteConfirmation({
       show: true,
       websiteId,
@@ -86,25 +110,35 @@ const LoadPage = () => {
 
   const handleConfirmDelete = async () => {
     try {
+      const { websiteId } = deleteConfirmation;
+      console.log("Deleting website with ID:", websiteId);
+      
       const response = await fetch(
-        `http://localhost:3000/api/delete-website/${deleteConfirmation.websiteId}`,
-        {
-          method: "DELETE",
-        }
+        `/api/delete-website/${websiteId}`,
+        { method: "DELETE" }
       );
-
+  
       if (!response.ok) {
-        throw new Error(`Failed to delete website: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to delete website");
       }
-
-      const updatedWebsites = websites.filter(
-        (website) => website.id !== deleteConfirmation.websiteId
+  
+      // Update local state to remove the deleted website
+      setWebsites(prevWebsites => 
+        prevWebsites.filter(website => website.id !== websiteId)
       );
-      setWebsites(updatedWebsites);
+      
       setDeleteConfirmation({ show: false, websiteId: null, websiteTitle: "" });
+      setNotification({
+        type: "success",
+        message: "Website deleted successfully"
+      });
     } catch (error) {
       console.error("Error deleting website:", error);
-      setError("Failed to delete website. Please try again.");
+      setNotification({
+        type: "error",
+        message: error.message || "Failed to delete website"
+      });
     }
   };
 

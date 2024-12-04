@@ -72,9 +72,26 @@ class LoadController {
   static async getLinks(req, res) {
     try {
       const websites = await Website.getAll();
+      console.log("Raw websites before processing:", websites);
+      
       const websitesWithPaths = await Promise.all(
-        websites.map(LoadController.processWebsiteData)
+        websites.map(async website => {
+          const normalizedPath = path.normalize(website.file_path);
+          const fileInfo = await FileService.getFileInfo(normalizedPath);
+
+          // Explicitly include every field, including id
+          return {
+            id: website.id, // Make sure id is included
+            web_url: website.web_url,
+            title: website.title,
+            file_path: fileInfo.path || normalizedPath,
+            created: website.created,
+            exists: fileInfo.exists,
+          };
+        })
       );
+      
+      console.log("Final processed websites:", websitesWithPaths);
       res.json(websitesWithPaths);
     } catch (error) {
       console.error("Error fetching websites:", error);
@@ -84,6 +101,7 @@ class LoadController {
       });
     }
   }
+
 
   static async processWebsiteData(website) {
     const normalizedPath = path.normalize(website.file_path);

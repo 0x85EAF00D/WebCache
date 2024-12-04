@@ -119,7 +119,14 @@ class DatabaseService {
   // Get all websites
   static async getAllWebsites() {
     try {
-      return await this.#dbAll("SELECT * FROM websites ORDER BY created DESC");
+      const rows = await this.#dbAll("SELECT * FROM websites ORDER BY created DESC");
+      return rows.map(row => ({
+        id: row.id,
+        web_url: row.web_url,
+        title: row.title,
+        file_path: row.file_path,
+        created: row.created
+      }));
     } catch (error) {
       console.error("Error fetching websites:", error);
       throw error;
